@@ -315,6 +315,7 @@ function LogsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {dialog}
     </div>
   );
 }
