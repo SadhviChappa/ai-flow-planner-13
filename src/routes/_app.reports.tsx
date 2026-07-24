@@ -62,7 +62,7 @@ function ReportsPage() {
   }, [tasks]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader title="Reports" description="Insights across your projects, tasks, and time." />
 
       <Card className="card-soft">

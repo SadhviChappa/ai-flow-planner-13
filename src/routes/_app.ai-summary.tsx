@@ -71,7 +71,7 @@ function AiSummaryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader
         title="AI Summary"
         description="An AI-generated view of your day. Powered by placeholder data for now."
