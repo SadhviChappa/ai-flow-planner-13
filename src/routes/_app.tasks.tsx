@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, CheckCircle2, Circle, ArrowUpDown, CheckSquare } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  CheckCircle2,
+  Circle,
+  ArrowUpDown,
+  CheckSquare,
+  Folder,
+  Calendar as CalendarIcon,
+  Clock,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +36,10 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
 import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
+import { EmptyState } from "@/components/empty-state";
+import { ListSkeleton } from "@/components/loading-skeletons";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useStore, uid, type Priority, type Task, type TaskStatus } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -51,11 +67,13 @@ const emptyForm = {
 };
 
 function TasksPage() {
+  const hydrated = useHydrated();
   const [projects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const { confirm, dialog } = useConfirm();
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -116,9 +134,16 @@ function TasksPage() {
   };
 
   const remove = (t: Task) => {
-    if (!confirm(`Delete "${t.name}"?`)) return;
-    setTasks((prev) => prev.filter((x) => x.id !== t.id));
-    toast.success("Task deleted");
+    confirm({
+      title: `Delete "${t.name}"?`,
+      description: "This task will be permanently removed.",
+      confirmLabel: "Delete task",
+      destructive: true,
+      onConfirm: () => {
+        setTasks((prev) => prev.filter((x) => x.id !== t.id));
+        toast.success("Task deleted");
+      },
+    });
   };
 
   const toggleComplete = (t: Task) => {
@@ -127,21 +152,22 @@ function TasksPage() {
         x.id === t.id ? { ...x, status: x.status === "Completed" ? "In Progress" : "Completed" } : x,
       ),
     );
+    if (t.status !== "Completed") toast.success("Nice — task completed 🎉");
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader
         title="Tasks"
         description="Break projects into actionable work."
         actions={
-          <Button onClick={openNew} disabled={projects.length === 0}>
+          <Button onClick={openNew} disabled={projects.length === 0} className="shadow-[var(--shadow-glow)]">
             <Plus className="h-4 w-4" /> New Task
           </Button>
         }
       />
 
-      <Card>
+      <Card className="card-soft">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
@@ -153,7 +179,7 @@ function TasksPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-soft">
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_auto_auto_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -183,23 +209,39 @@ function TasksPage() {
         </CardContent>
       </Card>
 
-      {filtered.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="grid place-items-center gap-3 py-16 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-              <CheckSquare className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {tasks.length === 0 ? "No tasks yet — create one to get started." : "No tasks match your filters."}
-            </p>
-          </CardContent>
-        </Card>
+      {!hydrated ? (
+        <ListSkeleton count={5} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={CheckSquare}
+          title={tasks.length === 0 ? "No tasks yet" : "No tasks match your filters"}
+          description={
+            tasks.length === 0
+              ? "Create your first task to start tracking work."
+              : "Try clearing filters or adjusting your search."
+          }
+          action={
+            tasks.length === 0 && projects.length > 0 ? (
+              <Button onClick={openNew}>
+                <Plus className="h-4 w-4" /> New Task
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid gap-3">
-          {filtered.map((t) => (
-            <Card key={t.id} className="transition-shadow hover:shadow-sm">
+          {filtered.map((t, i) => (
+            <Card
+              key={t.id}
+              className="card-soft transition-all hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}
+            >
               <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 p-4">
-                <button onClick={() => toggleComplete(t)} className="mt-0.5 text-muted-foreground hover:text-primary">
+                <button
+                  onClick={() => toggleComplete(t)}
+                  className="mt-0.5 text-muted-foreground transition-transform hover:scale-110 hover:text-primary"
+                  aria-label={t.status === "Completed" ? "Mark as in progress" : "Mark as completed"}
+                >
                   {t.status === "Completed" ? (
                     <CheckCircle2 className="h-5 w-5 text-[color:var(--success)]" />
                   ) : (
@@ -218,9 +260,20 @@ function TasksPage() {
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.description}</p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span>📁 {projectMap[t.projectId] ?? "—"}</span>
-                    {t.dueDate && <span>📅 {format(parseISO(t.dueDate), "MMM d, yyyy")}</span>}
-                    <span>⏱ {t.actualHours}h / {t.estimatedHours}h</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Folder className="h-3.5 w-3.5" />
+                      {projectMap[t.projectId] ?? "—"}
+                    </span>
+                    {t.dueDate && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {format(parseISO(t.dueDate), "MMM d, yyyy")}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      {t.actualHours}h / {t.estimatedHours}h
+                    </span>
                   </div>
                 </div>
                 <div className="flex shrink-0">
@@ -307,6 +360,7 @@ function TasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {dialog}
     </div>
   );
 }

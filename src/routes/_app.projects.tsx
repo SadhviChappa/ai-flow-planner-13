@@ -24,6 +24,10 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
 import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
+import { EmptyState } from "@/components/empty-state";
+import { CardGridSkeleton } from "@/components/loading-skeletons";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useStore, uid, type Priority, type Project, type ProjectStatus } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -48,11 +52,13 @@ const emptyForm = {
 };
 
 function ProjectsPage() {
+  const hydrated = useHydrated();
   const [projects, setProjects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const { confirm, dialog } = useConfirm();
 
   const openNew = () => {
     setEditing(null);
@@ -89,45 +95,56 @@ function ProjectsPage() {
   };
 
   const remove = (p: Project) => {
-    if (!confirm(`Delete "${p.name}"? Its tasks will also be removed.`)) return;
-    setProjects((prev) => prev.filter((x) => x.id !== p.id));
-    setTasks((prev) => prev.filter((t) => t.projectId !== p.id));
-    toast.success("Project deleted");
+    confirm({
+      title: `Delete "${p.name}"?`,
+      description: "Its tasks will also be removed. This action can't be undone.",
+      confirmLabel: "Delete project",
+      destructive: true,
+      onConfirm: () => {
+        setProjects((prev) => prev.filter((x) => x.id !== p.id));
+        setTasks((prev) => prev.filter((t) => t.projectId !== p.id));
+        toast.success("Project deleted");
+      },
+    });
   };
 
   return (
-    <div>
+    <div className="page-enter">
       <PageHeader
         title="Projects"
         description="Group your work into projects and set the pace."
         actions={
-          <Button onClick={openNew}>
+          <Button onClick={openNew} className="shadow-[var(--shadow-glow)]">
             <Plus className="h-4 w-4" /> New Project
           </Button>
         }
       />
 
-      {projects.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="grid place-items-center gap-3 py-16 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-              <FolderKanban className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-medium">No projects yet</p>
-              <p className="text-sm text-muted-foreground">Create your first project to start planning.</p>
-            </div>
-            <Button onClick={openNew}><Plus className="h-4 w-4" /> New Project</Button>
-          </CardContent>
-        </Card>
+      {!hydrated ? (
+        <CardGridSkeleton count={6} />
+      ) : projects.length === 0 ? (
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects yet"
+          description="Create your first project to start planning your work."
+          action={
+            <Button onClick={openNew}>
+              <Plus className="h-4 w-4" /> New Project
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((p) => {
+          {projects.map((p, i) => {
             const projectTasks = tasks.filter((t) => t.projectId === p.id);
             const done = projectTasks.filter((t) => t.status === "Completed").length;
             const pct = projectTasks.length ? Math.round((done / projectTasks.length) * 100) : 0;
             return (
-              <Card key={p.id} className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+              <Card
+                key={p.id}
+                className="group flex flex-col overflow-hidden card-soft hover-lift animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+              >
                 <div className="h-1.5 gradient-primary" />
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
@@ -153,10 +170,13 @@ function ProjectsPage() {
                   <div>
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>{done}/{projectTasks.length} tasks</span>
-                      <span>{pct}%</span>
+                      <span className="font-medium text-foreground">{pct}%</span>
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full gradient-primary transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="h-full gradient-primary transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -224,6 +244,7 @@ function ProjectsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {dialog}
     </div>
   );
 }
