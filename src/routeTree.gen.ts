@@ -19,6 +19,7 @@ import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppLogsRouteImport } from './routes/_app.logs'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppAiSummaryRouteImport } from './routes/_app.ai-summary'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -69,11 +70,17 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiSummaryRoute = AppAiSummaryRouteImport.update({
+  id: '/ai-summary',
+  path: '/ai-summary',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/ai-summary': typeof AppAiSummaryRoute
   '/dashboard': typeof AppDashboardRoute
   '/logs': typeof AppLogsRoute
   '/projects': typeof AppProjectsRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/ai-summary': typeof AppAiSummaryRoute
   '/dashboard': typeof AppDashboardRoute
   '/logs': typeof AppLogsRoute
   '/projects': typeof AppProjectsRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_app/ai-summary': typeof AppAiSummaryRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/logs': typeof AppLogsRoute
   '/_app/projects': typeof AppProjectsRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/ai-summary'
     | '/dashboard'
     | '/logs'
     | '/projects'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/ai-summary'
     | '/dashboard'
     | '/logs'
     | '/projects'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/signup'
+    | '/_app/ai-summary'
     | '/_app/dashboard'
     | '/_app/logs'
     | '/_app/projects'
@@ -221,10 +233,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-summary': {
+      id: '/_app/ai-summary'
+      path: '/ai-summary'
+      fullPath: '/ai-summary'
+      preLoaderRoute: typeof AppAiSummaryRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAiSummaryRoute: typeof AppAiSummaryRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppLogsRoute: typeof AppLogsRoute
   AppProjectsRoute: typeof AppProjectsRoute
@@ -234,6 +254,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAiSummaryRoute: AppAiSummaryRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppLogsRoute: AppLogsRoute,
   AppProjectsRoute: AppProjectsRoute,
