@@ -173,15 +173,21 @@ function LogsPage() {
       </div>
 
 
-      {grouped.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="grid place-items-center gap-3 py-16 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-              <NotebookPen className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">No logs yet — capture your first entry.</p>
-          </CardContent>
-        </Card>
+      {!hydrated ? (
+        <ListSkeleton count={4} />
+      ) : grouped.length === 0 ? (
+        <EmptyState
+          icon={NotebookPen}
+          title="No logs yet"
+          description="Capture your first entry to build a timeline of your work."
+          action={
+            projects.length > 0 ? (
+              <Button onClick={openNew}>
+                <Plus className="h-4 w-4" /> Add Log
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="relative space-y-8 border-l pl-6">
           {grouped.map(([date, items]) => {
