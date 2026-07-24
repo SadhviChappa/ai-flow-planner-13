@@ -205,7 +205,7 @@ function LogsPage() {
                 </div>
                 <div className="space-y-3">
                   {items.map((l) => (
-                    <Card key={l.id}>
+                    <Card key={l.id} className="card-soft transition-all hover:shadow-[var(--shadow-elevated)] animate-fade-in-up">
                       <CardContent className="p-4">
                         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                           <div className="min-w-0">
