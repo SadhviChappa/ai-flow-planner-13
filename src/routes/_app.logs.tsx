@@ -22,6 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import { ListSkeleton } from "@/components/loading-skeletons";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useStore, uid, todayISO, type DailyLog } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -49,12 +53,15 @@ const emptyForm = {
 };
 
 function LogsPage() {
+  const hydrated = useHydrated();
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs, setLogs] = useStore("logs");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<DailyLog | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const { confirm, dialog } = useConfirm();
+
 
   const openNew = () => {
     setEditing(null);
@@ -93,8 +100,16 @@ function LogsPage() {
   };
 
   const remove = (l: DailyLog) => {
-    if (!confirm("Delete this log?")) return;
-    setLogs((prev) => prev.filter((x) => x.id !== l.id));
+    confirm({
+      title: "Delete this log?",
+      description: "The entry will be permanently removed.",
+      confirmLabel: "Delete log",
+      destructive: true,
+      onConfirm: () => {
+        setLogs((prev) => prev.filter((x) => x.id !== l.id));
+        toast.success("Log deleted");
+      },
+    });
   };
 
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
