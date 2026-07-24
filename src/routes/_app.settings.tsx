@@ -91,6 +91,7 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      {dialog}
     </div>
   );
 }
