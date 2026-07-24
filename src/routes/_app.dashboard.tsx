@@ -27,6 +27,8 @@ import { Progress } from "@/components/ui/progress";
 import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/priority-badge";
+import { StatsSkeleton, ChartSkeleton } from "@/components/loading-skeletons";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useStore, todayISO } from "@/lib/storage";
 import { format, isToday, differenceInCalendarDays, subDays, parseISO } from "date-fns";
 
@@ -45,6 +47,7 @@ export const Route = createFileRoute("/_app/dashboard")({
 const COLORS = ["var(--chart-2)", "var(--chart-3)", "var(--chart-1)"];
 
 function DashboardPage() {
+  const hydrated = useHydrated();
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs] = useStore("logs");
@@ -97,17 +100,31 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader title="Dashboard" description="Your work at a glance." />
 
+      {!hydrated ? (
+        <>
+          <StatsSkeleton />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <ChartSkeleton className="h-72 lg:col-span-2" />
+            <ChartSkeleton className="h-72" />
+          </div>
+        </>
+      ) : (
+      <>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {stats.map((s) => (
-          <Card key={s.label}>
+        {stats.map((s, i) => (
+          <Card
+            key={s.label}
+            className="card-soft hover-lift animate-fade-in-up"
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
             <CardContent className="p-4">
               <div className={`grid h-9 w-9 place-items-center rounded-lg ${s.tone}`}>
                 <s.icon className="h-4 w-4" />
               </div>
-              <p className="mt-3 text-2xl font-semibold">{s.value}</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
             </CardContent>
           </Card>
