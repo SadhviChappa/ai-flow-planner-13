@@ -62,7 +62,7 @@ function SettingsPage() {
     <div className="space-y-6 page-enter">
       <PageHeader title="Settings" description="Manage your account and workspace." />
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -79,7 +79,7 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader><CardTitle className="text-base">Danger zone</CardTitle></CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">

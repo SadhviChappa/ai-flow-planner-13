@@ -131,7 +131,7 @@ function DashboardPage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader>
           <CardTitle className="text-base">Overall Progress</CardTitle>
         </CardHeader>
@@ -145,7 +145,7 @@ function DashboardPage() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="card-soft lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Weekly Productivity</CardTitle>
           </CardHeader>
@@ -162,7 +162,7 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="card-soft">
           <CardHeader>
             <CardTitle className="text-base">Task Distribution</CardTitle>
           </CardHeader>
@@ -187,7 +187,7 @@ function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="card-soft lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarClock className="h-4 w-4" /> Upcoming Deadlines
@@ -222,7 +222,7 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="card-soft">
           <CardHeader>
             <CardTitle className="text-base">Calendar</CardTitle>
           </CardHeader>
@@ -232,7 +232,7 @@ function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader>
           <CardTitle className="text-base">Recent Activity</CardTitle>
         </CardHeader>
