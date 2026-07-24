@@ -22,6 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import { ListSkeleton } from "@/components/loading-skeletons";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useStore, uid, todayISO, type DailyLog } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -49,12 +53,15 @@ const emptyForm = {
 };
 
 function LogsPage() {
+  const hydrated = useHydrated();
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs, setLogs] = useStore("logs");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<DailyLog | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const { confirm, dialog } = useConfirm();
+
 
   const openNew = () => {
     setEditing(null);
@@ -93,8 +100,16 @@ function LogsPage() {
   };
 
   const remove = (l: DailyLog) => {
-    if (!confirm("Delete this log?")) return;
-    setLogs((prev) => prev.filter((x) => x.id !== l.id));
+    confirm({
+      title: "Delete this log?",
+      description: "The entry will be permanently removed.",
+      confirmLabel: "Delete log",
+      destructive: true,
+      onConfirm: () => {
+        setLogs((prev) => prev.filter((x) => x.id !== l.id));
+        toast.success("Log deleted");
+      },
+    });
   };
 
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
@@ -115,40 +130,41 @@ function LogsPage() {
   const projectTasks = tasks.filter((t) => t.projectId === form.projectId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader
         title="Daily Logs"
         description="Capture what you worked on, what got in the way, and what's next."
         actions={
-          <Button onClick={openNew} disabled={projects.length === 0}>
+          <Button onClick={openNew} disabled={projects.length === 0} className="shadow-[var(--shadow-glow)]">
             <Plus className="h-4 w-4" /> Add Log
           </Button>
         }
       />
 
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{todayHours.toFixed(1)}h</p>
+                <p className="text-2xl font-semibold tracking-tight">{todayHours.toFixed(1)}h</p>
                 <p className="text-xs text-muted-foreground">Logged today</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
-            <p className="text-2xl font-semibold">{logs.length}</p>
+            <p className="text-2xl font-semibold tracking-tight">{logs.length}</p>
             <p className="text-xs text-muted-foreground">Total logs</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
-            <p className="text-2xl font-semibold">
+            <p className="text-2xl font-semibold tracking-tight">
               {logs.reduce((s, l) => s + Number(l.hours || 0), 0).toFixed(1)}h
             </p>
             <p className="text-xs text-muted-foreground">All-time hours</p>
@@ -156,15 +172,22 @@ function LogsPage() {
         </Card>
       </div>
 
-      {grouped.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="grid place-items-center gap-3 py-16 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
-              <NotebookPen className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">No logs yet — capture your first entry.</p>
-          </CardContent>
-        </Card>
+
+      {!hydrated ? (
+        <ListSkeleton count={4} />
+      ) : grouped.length === 0 ? (
+        <EmptyState
+          icon={NotebookPen}
+          title="No logs yet"
+          description="Capture your first entry to build a timeline of your work."
+          action={
+            projects.length > 0 ? (
+              <Button onClick={openNew}>
+                <Plus className="h-4 w-4" /> Add Log
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="relative space-y-8 border-l pl-6">
           {grouped.map(([date, items]) => {
@@ -182,7 +205,7 @@ function LogsPage() {
                 </div>
                 <div className="space-y-3">
                   {items.map((l) => (
-                    <Card key={l.id}>
+                    <Card key={l.id} className="card-soft transition-all hover:shadow-[var(--shadow-elevated)] animate-fade-in-up">
                       <CardContent className="p-4">
                         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                           <div className="min-w-0">
@@ -292,6 +315,7 @@ function LogsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {dialog}
     </div>
   );
 }

@@ -71,7 +71,7 @@ function AiSummaryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader
         title="AI Summary"
         description="An AI-generated view of your day. Powered by placeholder data for now."
@@ -105,7 +105,7 @@ function AiSummaryPage() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        <Card className="card-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-success/10 text-[color:var(--success)]">
@@ -127,7 +127,7 @@ function AiSummaryPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="card-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-warning/10 text-[color:var(--warning)]">
@@ -150,7 +150,7 @@ function AiSummaryPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-info/10 text-[color:var(--info)]">
@@ -177,7 +177,7 @@ function AiSummaryPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">

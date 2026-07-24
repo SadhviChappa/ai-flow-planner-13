@@ -62,10 +62,10 @@ function ReportsPage() {
   }, [tasks]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader title="Reports" description="Insights across your projects, tasks, and time." />
 
-      <Card>
+      <Card className="card-soft">
         <CardHeader><CardTitle className="text-base">Last 30 days — hours logged</CardTitle></CardHeader>
         <CardContent className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -81,7 +81,7 @@ function ReportsPage() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        <Card className="card-soft">
           <CardHeader><CardTitle className="text-base">Hours by project</CardTitle></CardHeader>
           <CardContent className="h-72">
             {hoursByProject.length ? (
@@ -99,7 +99,7 @@ function ReportsPage() {
             )}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-soft">
           <CardHeader><CardTitle className="text-base">Tasks by priority</CardTitle></CardHeader>
           <CardContent className="h-72">
             {tasks.length ? (
