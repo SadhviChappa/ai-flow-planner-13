@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useStore } from "@/lib/storage";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
@@ -28,6 +30,7 @@ function SettingsPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     setName(auth?.name ?? "");
@@ -40,15 +43,23 @@ function SettingsPage() {
   };
 
   const clearAll = () => {
-    if (!confirm("Delete all projects, tasks, and logs? This can't be undone.")) return;
-    setProjects([]);
-    setTasks([]);
-    setLogs([]);
-    toast.success("Workspace cleared");
+    confirm({
+      title: "Clear all workspace data?",
+      description: "This removes all projects, tasks, and logs from this device. This can't be undone.",
+      confirmLabel: "Clear everything",
+      destructive: true,
+      onConfirm: () => {
+        setProjects([]);
+        setTasks([]);
+        setLogs([]);
+        toast.success("Workspace cleared");
+      },
+    });
   };
 
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader title="Settings" description="Manage your account and workspace." />
 
       <Card>
