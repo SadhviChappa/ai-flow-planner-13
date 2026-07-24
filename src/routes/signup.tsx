@@ -39,7 +39,35 @@ function SignupPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="flex items-center justify-center p-6 sm:p-12 order-2 lg:order-1">
+      {/* Left panel */}
+      <div
+        className="relative hidden lg:flex flex-col justify-between p-12 text-white overflow-hidden"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, oklch(0.55 0.24 285) 0%, oklch(0.55 0.28 320) 100%)",
+        }}
+      >
+        <div className="flex items-center gap-2.5 font-semibold">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15 backdrop-blur-sm">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span>AI Work Planner</span>
+        </div>
+
+        <div className="space-y-5 max-w-lg">
+          <h1 className="text-4xl xl:text-5xl font-bold leading-[1.15] tracking-tight">
+            Plan your week with an AI copilot that actually understands your work.
+          </h1>
+          <p className="text-white/85 text-base xl:text-lg">
+            Turn scattered notes into structured projects, tasks, and daily focus — automatically.
+          </p>
+        </div>
+
+        <div />
+      </div>
+
+      {/* Right panel */}
+      <div className="flex items-center justify-center p-6 sm:p-12 bg-background">
         <form onSubmit={submit} className="w-full max-w-md space-y-6">
           <div className="lg:hidden flex items-center gap-2 font-semibold">
             <span className="grid h-8 w-8 place-items-center rounded-lg gradient-primary text-primary-foreground">
@@ -48,44 +76,42 @@ function SignupPage() {
             AI Work Planner
           </div>
           <div>
-            <h2 className="text-2xl font-semibold">Create your account</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Start planning your projects in minutes.
+            <h2 className="text-3xl font-bold tracking-tight">Create your account</h2>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Start planning your work with AI in minutes.
             </p>
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada Lovelace" />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@work.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
             </div>
           </div>
-          <Button type="submit" className="w-full">Create account</Button>
-          <p className="text-center text-sm text-muted-foreground">
-            Already have one?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-lg bg-[oklch(0.2_0.04_265)] text-white hover:bg-[oklch(0.15_0.04_265)]"
+          >
+            Create account
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            By signing up you agree to our{" "}
+            <a href="#" className="font-medium text-foreground hover:underline">Terms</a>{" "}
+            and{" "}
+            <a href="#" className="font-medium text-foreground hover:underline">Privacy Policy</a>.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link to="/login" className="font-semibold text-foreground hover:underline">Log in</Link>
           </p>
         </form>
-      </div>
-      <div className="hidden lg:flex flex-col justify-between p-12 gradient-primary text-primary-foreground order-1 lg:order-2">
-        <div className="flex items-center gap-2 font-semibold">
-          <Sparkles className="h-5 w-5" />
-          AI Work Planner
-        </div>
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold leading-tight">Bring calm to your workload.</h1>
-          <p className="text-primary-foreground/85 max-w-md">
-            Everything you need to plan, execute, and reflect on your work — in one focused workspace.
-          </p>
-        </div>
-        <p className="text-sm text-primary-foreground/70">© {new Date().getFullYear()} AI Work Planner</p>
       </div>
     </div>
   );
