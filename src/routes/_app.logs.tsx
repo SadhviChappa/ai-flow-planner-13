@@ -130,46 +130,48 @@ function LogsPage() {
   const projectTasks = tasks.filter((t) => t.projectId === form.projectId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <PageHeader
         title="Daily Logs"
         description="Capture what you worked on, what got in the way, and what's next."
         actions={
-          <Button onClick={openNew} disabled={projects.length === 0}>
+          <Button onClick={openNew} disabled={projects.length === 0} className="shadow-[var(--shadow-glow)]">
             <Plus className="h-4 w-4" /> Add Log
           </Button>
         }
       />
 
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{todayHours.toFixed(1)}h</p>
+                <p className="text-2xl font-semibold tracking-tight">{todayHours.toFixed(1)}h</p>
                 <p className="text-xs text-muted-foreground">Logged today</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
-            <p className="text-2xl font-semibold">{logs.length}</p>
+            <p className="text-2xl font-semibold tracking-tight">{logs.length}</p>
             <p className="text-xs text-muted-foreground">Total logs</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-soft hover-lift">
           <CardContent className="p-4">
-            <p className="text-2xl font-semibold">
+            <p className="text-2xl font-semibold tracking-tight">
               {logs.reduce((s, l) => s + Number(l.hours || 0), 0).toFixed(1)}h
             </p>
             <p className="text-xs text-muted-foreground">All-time hours</p>
           </CardContent>
         </Card>
       </div>
+
 
       {grouped.length === 0 ? (
         <Card className="border-dashed">
