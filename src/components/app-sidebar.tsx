@@ -44,13 +44,16 @@ export function AppSidebar() {
         to={to}
         onClick={() => setOpen(false)}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
           active
-            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[var(--shadow-glow)]"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-0.5",
         )}
       >
-        <Icon className="h-4 w-4 shrink-0" />
+        {active && (
+          <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 -translate-x-2 rounded-r-full bg-sidebar-primary-foreground/90" />
+        )}
+        <Icon className={cn("h-4 w-4 shrink-0 transition-transform", !active && "group-hover:scale-110")} />
         <span className="truncate">{label}</span>
       </Link>
     );
@@ -74,14 +77,14 @@ export function AppSidebar() {
       {/* Overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden animate-fade-in"
           onClick={() => setOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shadow-none",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
