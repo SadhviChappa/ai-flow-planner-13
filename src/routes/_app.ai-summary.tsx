@@ -75,12 +75,13 @@ function AiSummaryPage() {
       <PageHeader
         title="AI Summary"
         description="An AI-generated view of your day. Powered by placeholder data for now."
-      >
-        <Button onClick={regenerate} disabled={loading} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Generating…" : "Regenerate"}
-        </Button>
-      </PageHeader>
+        actions={
+          <Button onClick={regenerate} disabled={loading} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Generating…" : "Regenerate"}
+          </Button>
+        }
+      />
 
       <Card className="overflow-hidden border-primary/20">
         <div className="gradient-primary px-5 py-4 text-primary-foreground">
