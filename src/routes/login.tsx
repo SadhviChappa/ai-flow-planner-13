@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useStore } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -20,18 +20,24 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const [, setAuth] = useStore("auth");
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Enter your email and password");
       return;
     }
-    setAuth({ email, name: email.split("@")[0] });
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Welcome back!");
     navigate({ to: "/dashboard" });
   };
@@ -92,8 +98,8 @@ function LoginPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
