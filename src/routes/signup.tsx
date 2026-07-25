@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useStore } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
@@ -20,22 +20,36 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
-  const [, setAuth] = useStore("auth");
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
-    setAuth({ email, name });
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: { full_name: name },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Account created!");
     navigate({ to: "/dashboard" });
   };
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
