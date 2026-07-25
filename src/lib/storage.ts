@@ -227,34 +227,39 @@ async function syncDiff<T extends { id: string }>(
   const toDeleteIds: string[] = [];
   for (const item of prev) if (!nextById.has(item.id)) toDeleteIds.push(item.id);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = supabase as any;
   const ops: Promise<unknown>[] = [];
   if (toInsert.length) {
     ops.push(
-      supabase.from(spec.table).insert(toInsert.map(spec.toInsert)).then(({ error }) => {
-        if (error) console.error(`[${spec.table}] insert`, error);
+      Promise.resolve(
+        client.from(spec.table).insert(toInsert.map(spec.toInsert)),
+      ).then((res: { error?: unknown }) => {
+        if (res?.error) console.error(`[${spec.table}] insert`, res.error);
       }),
     );
   }
   for (const item of toUpdate) {
     ops.push(
-      supabase
-        .from(spec.table)
-        .update(spec.toUpdate(item))
-        .eq("id", item.id)
-        .then(({ error }) => {
-          if (error) console.error(`[${spec.table}] update`, error);
-        }),
+      Promise.resolve(
+        client.from(spec.table).update(spec.toUpdate(item)).eq("id", item.id),
+      ).then((res: { error?: unknown }) => {
+        if (res?.error) console.error(`[${spec.table}] update`, res.error);
+      }),
     );
   }
   if (toDeleteIds.length) {
     ops.push(
-      supabase.from(spec.table).delete().in("id", toDeleteIds).then(({ error }) => {
-        if (error) console.error(`[${spec.table}] delete`, error);
+      Promise.resolve(
+        client.from(spec.table).delete().in("id", toDeleteIds),
+      ).then((res: { error?: unknown }) => {
+        if (res?.error) console.error(`[${spec.table}] delete`, res.error);
       }),
     );
   }
   await Promise.all(ops);
 }
+
 
 // ---------- table hook ----------
 function useTableStore<K extends "projects" | "tasks" | "logs">(
