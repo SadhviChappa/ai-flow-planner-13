@@ -303,10 +303,11 @@ function useTableStore<K extends "projects" | "tasks" | "logs">(
       setState(next);
       if (!userId) return;
       void syncDiff(
-        spec as TableSpec<{ id: string }>,
+        spec as unknown as TableSpec<{ id: string }>,
         prev as unknown as { id: string }[],
         next as unknown as { id: string }[],
       );
+
     },
     [spec, userId],
   );
