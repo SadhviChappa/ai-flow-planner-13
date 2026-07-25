@@ -111,10 +111,12 @@ function SignupPage() {
           </div>
           <Button
             type="submit"
+            disabled={loading}
             className="w-full h-11 rounded-lg bg-[oklch(0.2_0.04_265)] text-white hover:bg-[oklch(0.15_0.04_265)]"
           >
-            Create account
+            {loading ? "Creating account…" : "Create account"}
           </Button>
+
           <p className="text-center text-xs text-muted-foreground">
             By signing up you agree to our{" "}
             <a href="#" className="font-medium text-foreground hover:underline">Terms</a>{" "}
