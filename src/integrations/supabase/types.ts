@@ -14,7 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_logs: {
+        Row: {
+          achievement: string
+          challenges: string
+          created_at: string
+          date: string
+          description: string
+          hours: number
+          id: string
+          project_id: string
+          task_id: string | null
+          tomorrow_plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement?: string
+          challenges?: string
+          created_at?: string
+          date: string
+          description?: string
+          hours?: number
+          id?: string
+          project_id: string
+          task_id?: string | null
+          tomorrow_plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          achievement?: string
+          challenges?: string
+          created_at?: string
+          date?: string
+          description?: string
+          hours?: number
+          id?: string
+          project_id?: string
+          task_id?: string | null
+          tomorrow_plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          deadline: string
+          description: string
+          id: string
+          name: string
+          priority: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string
+          description?: string
+          id?: string
+          name: string
+          priority?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          description?: string
+          id?: string
+          name?: string
+          priority?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          actual_hours: number
+          created_at: string
+          description: string
+          due_date: string
+          estimated_hours: number
+          id: string
+          name: string
+          priority: string
+          project_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number
+          created_at?: string
+          description?: string
+          due_date?: string
+          estimated_hours?: number
+          id?: string
+          name: string
+          priority?: string
+          project_id: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          actual_hours?: number
+          created_at?: string
+          description?: string
+          due_date?: string
+          estimated_hours?: number
+          id?: string
+          name?: string
+          priority?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
