@@ -27,8 +27,9 @@ import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
 import { EmptyState } from "@/components/empty-state";
 import { CardGridSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate } from "@/lib/date";
 import { useStore, uid, type Priority, type Project, type ProjectStatus } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/projects")({
@@ -52,7 +53,7 @@ const emptyForm = {
 };
 
 function ProjectsPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects, setProjects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
@@ -120,7 +121,7 @@ function ProjectsPage() {
         }
       />
 
-      {!hydrated ? (
+      {loading ? (
         <CardGridSkeleton count={6} />
       ) : projects.length === 0 ? (
         <EmptyState
@@ -183,7 +184,7 @@ function ProjectsPage() {
                 <CardFooter className="flex items-center justify-between border-t bg-muted/30 py-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    {p.deadline ? format(parseISO(p.deadline), "MMM d, yyyy") : "No deadline"}
+                    {formatDate(p.deadline, "MMM d, yyyy", "No deadline")}
                   </span>
                   <span>{projectTasks.length} tasks</span>
                 </CardFooter>

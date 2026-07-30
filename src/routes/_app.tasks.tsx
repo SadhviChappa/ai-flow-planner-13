@@ -39,8 +39,9 @@ import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate } from "@/lib/date";
 import { useStore, uid, type Priority, type Task, type TaskStatus } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/tasks")({
@@ -67,7 +68,7 @@ const emptyForm = {
 };
 
 function TasksPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
@@ -209,7 +210,7 @@ function TasksPage() {
         </CardContent>
       </Card>
 
-      {!hydrated ? (
+      {loading ? (
         <ListSkeleton count={5} />
       ) : filtered.length === 0 ? (
         <EmptyState
@@ -267,7 +268,7 @@ function TasksPage() {
                     {t.dueDate && (
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarIcon className="h-3.5 w-3.5" />
-                        {format(parseISO(t.dueDate), "MMM d, yyyy")}
+                        {formatDate(t.dueDate)}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1.5">
