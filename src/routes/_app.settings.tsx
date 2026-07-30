@@ -8,6 +8,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { useStore } from "@/lib/storage";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { validateEmail, validateName } from "@/lib/validation";
 
 
 export const Route = createFileRoute("/_app/settings")({
@@ -38,14 +39,20 @@ function SettingsPage() {
   }, [auth]);
 
   const save = () => {
-    setAuth({ name, email });
+    const nameError = validateName(name);
+    const emailError = validateEmail(email);
+    if (nameError || emailError) {
+      toast.error(nameError ?? emailError ?? "Check your details");
+      return;
+    }
+    setAuth({ name: name.trim(), email: email.trim() });
     toast.success("Profile saved");
   };
 
   const clearAll = () => {
     confirm({
       title: "Clear all workspace data?",
-      description: "This removes all projects, tasks, and logs from this device. This can't be undone.",
+      description: "This removes every project, task, and log in your account. This can't be undone.",
       confirmLabel: "Clear everything",
       destructive: true,
       onConfirm: () => {
@@ -85,7 +92,7 @@ function SettingsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <div>
               <p className="font-medium">Clear all workspace data</p>
-              <p className="text-sm text-muted-foreground">Removes all projects, tasks, and logs from this device.</p>
+              <p className="text-sm text-muted-foreground">Permanently deletes every project, task, and log in your account.</p>
             </div>
             <Button variant="destructive" onClick={clearAll}>Clear data</Button>
           </div>
