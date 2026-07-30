@@ -39,8 +39,9 @@ import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate } from "@/lib/date";
 import { useStore, uid, type Priority, type Task, type TaskStatus } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/tasks")({
@@ -67,7 +68,7 @@ const emptyForm = {
 };
 
 function TasksPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
@@ -121,12 +122,23 @@ function TasksPage() {
 
   const save = () => {
     if (!form.name.trim()) return toast.error("Task name is required");
+    if (form.name.trim().length > 120) return toast.error("Task name is too long (max 120 characters)");
     if (!form.projectId) return toast.error("Select a project");
+    if (!projects.some((p) => p.id === form.projectId)) return toast.error("That project no longer exists");
+    if (form.estimatedHours < 0 || form.actualHours < 0) return toast.error("Hours can't be negative");
+    if (form.estimatedHours > 1000 || form.actualHours > 1000) return toast.error("Hours look unrealistic (max 1000)");
+    const duplicate = tasks.some(
+      (t) =>
+        t.id !== editing?.id &&
+        t.projectId === form.projectId &&
+        t.name.trim().toLowerCase() === form.name.trim().toLowerCase(),
+    );
+    if (duplicate) return toast.error("A task with this name already exists in that project");
     if (editing) {
       setTasks((prev) => prev.map((t) => (t.id === editing.id ? { ...editing, ...form } : t)));
       toast.success("Task updated");
     } else {
-      const t: Task = { id: uid(), createdAt: new Date().toISOString(), ...form };
+      const t: Task = { id: uid(), createdAt: new Date().toISOString(), ...form, name: form.name.trim() };
       setTasks((prev) => [t, ...prev]);
       toast.success("Task created");
     }
@@ -209,7 +221,7 @@ function TasksPage() {
         </CardContent>
       </Card>
 
-      {!hydrated ? (
+      {loading ? (
         <ListSkeleton count={5} />
       ) : filtered.length === 0 ? (
         <EmptyState
@@ -267,7 +279,7 @@ function TasksPage() {
                     {t.dueDate && (
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarIcon className="h-3.5 w-3.5" />
-                        {format(parseISO(t.dueDate), "MMM d, yyyy")}
+                        {formatDate(t.dueDate)}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1.5">

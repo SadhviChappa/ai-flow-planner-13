@@ -28,8 +28,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/priority-badge";
 import { StatsSkeleton, ChartSkeleton } from "@/components/loading-skeletons";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate, isValidDateString } from "@/lib/date";
 import { useStore, todayISO } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { format, isToday, differenceInCalendarDays, subDays, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/_app/dashboard")({
 const COLORS = ["var(--chart-2)", "var(--chart-3)", "var(--chart-1)"];
 
 function DashboardPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs] = useStore("logs");
@@ -78,7 +79,7 @@ function DashboardPage() {
 
   const upcoming = useMemo(() => {
     return [...tasks]
-      .filter((t) => t.status !== "Completed" && t.dueDate)
+      .filter((t) => t.status !== "Completed" && isValidDateString(t.dueDate))
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
       .slice(0, 5);
   }, [tasks]);
@@ -103,7 +104,7 @@ function DashboardPage() {
     <div className="space-y-6 page-enter">
       <PageHeader title="Dashboard" description="Your work at a glance." />
 
-      {!hydrated ? (
+      {loading ? (
         <>
           <StatsSkeleton />
           <div className="grid gap-4 lg:grid-cols-3">
@@ -203,7 +204,7 @@ function DashboardPage() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{t.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {projectMap[t.projectId] ?? "No project"} • Due {format(parseISO(t.dueDate), "MMM d")}
+                          {projectMap[t.projectId] ?? "No project"} • Due {formatDate(t.dueDate, "MMM d")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -249,7 +250,7 @@ function DashboardPage() {
                       {projectMap[l.projectId] ?? "Log"} — {l.hours}h
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      {isToday(parseISO(l.date)) ? "Today" : format(parseISO(l.date), "MMM d")}
+                      {isValidDateString(l.date) && isToday(parseISO(l.date)) ? "Today" : formatDate(l.date, "MMM d")}
                     </span>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.description}</p>

@@ -25,8 +25,9 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate } from "@/lib/date";
 import { useStore, uid, todayISO, type DailyLog } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/logs")({
@@ -53,7 +54,7 @@ const emptyForm = {
 };
 
 function LogsPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs, setLogs] = useStore("logs");
@@ -86,7 +87,12 @@ function LogsPage() {
 
   const save = () => {
     if (!form.projectId) return toast.error("Select a project");
+    if (!projects.some((p) => p.id === form.projectId)) return toast.error("That project no longer exists");
     if (!form.date) return toast.error("Pick a date");
+    if (form.date > todayISO()) return toast.error("You can't log work for a future date");
+    if (form.hours < 0) return toast.error("Hours can't be negative");
+    if (form.hours > 24) return toast.error("A single log can't exceed 24 hours");
+    if (!form.description.trim()) return toast.error("Describe what you worked on");
     const payload = { ...form, taskId: form.taskId || undefined };
     if (editing) {
       setLogs((prev) => prev.map((l) => (l.id === editing.id ? { ...editing, ...payload } : l)));
@@ -173,7 +179,7 @@ function LogsPage() {
       </div>
 
 
-      {!hydrated ? (
+      {loading ? (
         <ListSkeleton count={4} />
       ) : grouped.length === 0 ? (
         <EmptyState
@@ -195,11 +201,11 @@ function LogsPage() {
             return (
               <section key={date} className="relative">
                 <span className="absolute -left-[31px] top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                  {format(parseISO(date), "d")}
+                  {formatDate(date, "d")}
                 </span>
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <p className="font-semibold">{format(parseISO(date), "EEEE, MMMM d, yyyy")}</p>
+                    <p className="font-semibold">{formatDate(date, "EEEE, MMMM d, yyyy")}</p>
                     <p className="text-xs text-muted-foreground">{items.length} entries • {dayHours}h total</p>
                   </div>
                 </div>

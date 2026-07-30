@@ -27,8 +27,9 @@ import { PriorityBadge, StatusBadge } from "@/components/priority-badge";
 import { EmptyState } from "@/components/empty-state";
 import { CardGridSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
-import { useHydrated } from "@/hooks/use-hydrated";
+import { formatDate } from "@/lib/date";
 import { useStore, uid, type Priority, type Project, type ProjectStatus } from "@/lib/storage";
+import { useDataLoading } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/projects")({
@@ -52,7 +53,7 @@ const emptyForm = {
 };
 
 function ProjectsPage() {
-  const hydrated = useHydrated();
+  const loading = useDataLoading();
   const [projects, setProjects] = useStore("projects");
   const [tasks, setTasks] = useStore("tasks");
   const [open, setOpen] = useState(false);
@@ -83,11 +84,22 @@ function ProjectsPage() {
       toast.error("Project name is required");
       return;
     }
+    if (form.name.trim().length > 120) {
+      toast.error("Project name is too long (max 120 characters)");
+      return;
+    }
+    const duplicate = projects.some(
+      (p) => p.id !== editing?.id && p.name.trim().toLowerCase() === form.name.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      toast.error("You already have a project with this name");
+      return;
+    }
     if (editing) {
       setProjects((prev) => prev.map((p) => (p.id === editing.id ? { ...editing, ...form } : p)));
       toast.success("Project updated");
     } else {
-      const p: Project = { id: uid(), createdAt: new Date().toISOString(), ...form };
+      const p: Project = { id: uid(), createdAt: new Date().toISOString(), ...form, name: form.name.trim() };
       setProjects((prev) => [p, ...prev]);
       toast.success("Project created");
     }
@@ -120,7 +132,7 @@ function ProjectsPage() {
         }
       />
 
-      {!hydrated ? (
+      {loading ? (
         <CardGridSkeleton count={6} />
       ) : projects.length === 0 ? (
         <EmptyState
@@ -183,7 +195,7 @@ function ProjectsPage() {
                 <CardFooter className="flex items-center justify-between border-t bg-muted/30 py-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    {p.deadline ? format(parseISO(p.deadline), "MMM d, yyyy") : "No deadline"}
+                    {formatDate(p.deadline, "MMM d, yyyy", "No deadline")}
                   </span>
                   <span>{projectTasks.length} tasks</span>
                 </CardFooter>
