@@ -15,6 +15,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,12 +31,21 @@ const nav = [
 export function AppSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const [auth, setAuth] = useStore("auth");
+  const [auth] = useStore("auth");
   const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
 
-  const logout = () => {
-    setAuth(null);
-    navigate({ to: "/login" });
+  const logout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+    setSigningOut(false);
+    if (error) {
+      toast.error("Couldn't sign out", { description: error.message });
+      return;
+    }
+    toast.success("Signed out");
+    navigate({ to: "/login", replace: true });
   };
 
   const Item = ({ to, label, icon: Icon }: (typeof nav)[number]) => {
@@ -115,7 +126,7 @@ export function AppSidebar() {
                 {auth?.email ?? "not signed in"}
               </p>
             </div>
-            <Button variant="ghost" size="icon" onClick={logout} className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+            <Button variant="ghost" size="icon" onClick={logout} disabled={signingOut} aria-label="Sign out" title="Sign out" className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

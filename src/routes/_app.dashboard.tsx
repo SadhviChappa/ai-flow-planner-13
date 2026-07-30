@@ -28,7 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/priority-badge";
 import { StatsSkeleton, ChartSkeleton } from "@/components/loading-skeletons";
-import { formatDate } from "@/lib/date";
+import { formatDate, isValidDateString } from "@/lib/date";
 import { useStore, todayISO } from "@/lib/storage";
 import { useDataLoading } from "@/lib/storage";
 import { format, isToday, differenceInCalendarDays, subDays, parseISO } from "date-fns";
@@ -79,7 +79,7 @@ function DashboardPage() {
 
   const upcoming = useMemo(() => {
     return [...tasks]
-      .filter((t) => t.status !== "Completed" && t.dueDate)
+      .filter((t) => t.status !== "Completed" && isValidDateString(t.dueDate))
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
       .slice(0, 5);
   }, [tasks]);
@@ -250,7 +250,7 @@ function DashboardPage() {
                       {projectMap[l.projectId] ?? "Log"} — {l.hours}h
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      {isToday(parseISO(l.date)) ? "Today" : formatDate(l.date, "MMM d")}
+                      {isValidDateString(l.date) && isToday(parseISO(l.date)) ? "Today" : formatDate(l.date, "MMM d")}
                     </span>
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.description}</p>
