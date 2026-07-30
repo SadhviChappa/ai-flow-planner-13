@@ -1,47 +1,29 @@
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { supabase } from "@/integrations/supabase/client";
+import { useSession, useSessionReady } from "@/lib/storage";
 
 export const Route = createFileRoute("/_app")({
+  ssr: false,
   component: AppLayout,
 });
 
 function AppLayout() {
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
-  const [authed, setAuthed] = useState(false);
+  const session = useSession();
+  const ready = useSessionReady();
 
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      if (!data.session) {
-        navigate({ to: "/login" });
-      } else {
-        setAuthed(true);
-      }
-      setChecked(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!mounted) return;
-      if (!session) {
-        setAuthed(false);
-        navigate({ to: "/login" });
-      } else {
-        setAuthed(true);
-      }
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [navigate]);
+    if (ready && !session) navigate({ to: "/login", replace: true });
+  }, [ready, session, navigate]);
 
-  if (!checked || !authed) {
+  if (!ready || !session) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
-        Loading…
+      <div className="grid min-h-screen place-items-center bg-background">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          Loading your workspace…
+        </div>
       </div>
     );
   }

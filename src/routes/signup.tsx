@@ -24,30 +24,49 @@ function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    if (loading) return;
+    const nextErrors = {
+      name: validateName(name) ?? undefined,
+      email: validateEmail(email) ?? undefined,
+      password: validatePassword(password) ?? undefined,
+    };
+    setErrors(nextErrors);
+    if (nextErrors.name || nextErrors.email || nextErrors.password) return;
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: name },
+        data: { full_name: name.trim() },
       },
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Couldn't create account", { description: authErrorMessage(error.message) });
+      return;
+    }
+    // Supabase returns an obfuscated user with no identities when the email is taken.
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      toast.error("Email already registered", { description: "Try signing in instead." });
+      navigate({ to: "/login" });
+      return;
+    }
+    if (!data.session) {
+      toast.success("Account created", {
+        description: "Check your inbox to confirm your email, then sign in.",
+      });
+      navigate({ to: "/login", replace: true });
       return;
     }
     toast.success("Account created!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/dashboard", replace: true });
   };
 
 
