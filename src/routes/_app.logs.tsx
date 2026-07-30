@@ -87,7 +87,12 @@ function LogsPage() {
 
   const save = () => {
     if (!form.projectId) return toast.error("Select a project");
+    if (!projects.some((p) => p.id === form.projectId)) return toast.error("That project no longer exists");
     if (!form.date) return toast.error("Pick a date");
+    if (form.date > todayISO()) return toast.error("You can't log work for a future date");
+    if (form.hours < 0) return toast.error("Hours can't be negative");
+    if (form.hours > 24) return toast.error("A single log can't exceed 24 hours");
+    if (!form.description.trim()) return toast.error("Describe what you worked on");
     const payload = { ...form, taskId: form.taskId || undefined };
     if (editing) {
       setLogs((prev) => prev.map((l) => (l.id === editing.id ? { ...editing, ...payload } : l)));

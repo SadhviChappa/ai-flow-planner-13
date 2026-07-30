@@ -84,11 +84,22 @@ function ProjectsPage() {
       toast.error("Project name is required");
       return;
     }
+    if (form.name.trim().length > 120) {
+      toast.error("Project name is too long (max 120 characters)");
+      return;
+    }
+    const duplicate = projects.some(
+      (p) => p.id !== editing?.id && p.name.trim().toLowerCase() === form.name.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      toast.error("You already have a project with this name");
+      return;
+    }
     if (editing) {
       setProjects((prev) => prev.map((p) => (p.id === editing.id ? { ...editing, ...form } : p)));
       toast.success("Project updated");
     } else {
-      const p: Project = { id: uid(), createdAt: new Date().toISOString(), ...form };
+      const p: Project = { id: uid(), createdAt: new Date().toISOString(), ...form, name: form.name.trim() };
       setProjects((prev) => [p, ...prev]);
       toast.success("Project created");
     }
