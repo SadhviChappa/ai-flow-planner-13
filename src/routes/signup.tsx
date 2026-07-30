@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { authErrorMessage, validateEmail, validateName, validatePassword } from "@/lib/validation";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -101,7 +102,7 @@ function SignupPage() {
 
       {/* Right panel */}
       <div className="flex items-center justify-center p-6 sm:p-12 bg-background">
-        <form onSubmit={submit} className="w-full max-w-md space-y-6">
+        <form onSubmit={submit} noValidate className="w-full max-w-md space-y-6">
           <div className="lg:hidden flex items-center gap-2 font-semibold">
             <span className="grid h-8 w-8 place-items-center rounded-lg gradient-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
@@ -117,15 +118,18 @@ function SignupPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
+              <Input id="name" autoComplete="name" aria-invalid={Boolean(errors.name)} value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@work.com" />
+              <Input id="email" type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@work.com" />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+              <Input id="password" type="password" autoComplete="new-password" aria-invalid={Boolean(errors.password)} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
           </div>
           <Button
