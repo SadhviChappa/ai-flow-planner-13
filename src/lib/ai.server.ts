@@ -103,3 +103,68 @@ export async function generateJson<T>(options: {
     throw new AiRequestError("The AI returned an unexpected format. Please try again.");
   }
 }
+
+/* ------------------------- prompt + execution helpers ---------------------- */
+
+import type { AiResponse, WorkContext } from "./ai-types";
+
+export const AI_SYSTEM_PROMPT =
+  "You are an experienced engineering productivity coach embedded in a work tracking app. " +
+  "You write concise, specific, encouraging feedback grounded strictly in the data you are given. " +
+  "Never invent tasks or hours that are not present. Respond only with JSON matching the requested schema.";
+
+export function describeContext(ctx: WorkContext) {
+  const list = (items: { name: string; project?: string; priority?: string; dueDate?: string }[]) =>
+    items.length
+      ? items
+          .map(
+            (t) =>
+              `- ${t.name}${t.project ? ` (project: ${t.project})` : ""}${t.priority ? ` [${t.priority} priority]` : ""}${t.dueDate ? ` due ${t.dueDate}` : ""}`,
+          )
+          .join("\n")
+      : "- (none)";
+
+  const logs = ctx.logs.length
+    ? ctx.logs
+        .map(
+          (l, i) =>
+            `Entry ${i + 1}: ${l.hours}h on ${l.project ?? "unknown project"}${l.task ? ` / ${l.task}` : ""}\n  Work: ${l.description || "—"}\n  Challenges: ${l.challenges || "—"}\n  Achievement: ${l.achievement || "—"}\n  Tomorrow's plan: ${l.tomorrowPlan || "—"}`,
+        )
+        .join("\n")
+    : "(no log entries)";
+
+  return [
+    `Date: ${ctx.date}`,
+    `Total hours logged: ${ctx.hoursLogged}`,
+    `Completed tasks:\n${list(ctx.completedTasks)}`,
+    `Pending tasks:\n${list(ctx.pendingTasks)}`,
+    `Daily log entries:\n${logs}`,
+  ].join("\n\n");
+}
+
+/** Runs an AI call, converting configuration/API failures into a safe result. */
+export async function runAi<T>(build: () => Promise<T>): Promise<AiResponse<T>> {
+  if (!isGeminiConfigured()) {
+    return {
+      ok: false,
+      configured: false,
+      error:
+        "AI is not configured yet. Add a GEMINI_API_KEY environment variable to switch these insights on.",
+    };
+  }
+  try {
+    return { ok: true, configured: true, data: await build() };
+  } catch (error) {
+    if (error instanceof AiNotConfiguredError) {
+      return { ok: false, configured: false, error: error.message };
+    }
+    return {
+      ok: false,
+      configured: true,
+      error:
+        error instanceof AiRequestError
+          ? error.message
+          : "Something went wrong while generating AI insights. Please try again.",
+    };
+  }
+}
