@@ -403,12 +403,24 @@ function useAuthStore(): [AuthShape, (v: AuthShape | ((p: AuthShape) => AuthShap
         .select("full_name, email")
         .eq("id", user.id)
         .maybeSingle();
-      if (cancelled || error || !data) return;
+      if (cancelled || error) return;
+      const metaName = str(user.user_metadata?.full_name as string | undefined);
+      // Backfill full_name from signup metadata when the profile row is missing/blank.
+      if (metaName && !str(data?.full_name)) {
+        const { error: upsertError } = await supabase
+          .from("profiles")
+          .upsert({ id: user.id, full_name: metaName, email: user.email ?? "" });
+        if (upsertError) console.error("[profiles] backfill", upsertError);
+        if (!cancelled) setProfile({ email: user.email ?? fallback.email, name: metaName });
+        return;
+      }
+      if (!data) return;
       setProfile({
         email: str(data.email) || fallback.email,
         name: str(data.full_name) || fallback.name,
       });
     })();
+
     return () => {
       cancelled = true;
     };

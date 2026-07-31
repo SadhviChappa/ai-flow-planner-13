@@ -66,8 +66,20 @@ function SignupPage() {
       navigate({ to: "/login", replace: true });
       return;
     }
+    // Persist the full name onto the profile row for the freshly authenticated user.
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: data.user.id,
+          full_name: name.trim(),
+          email: email.trim().toLowerCase(),
+        });
+      if (profileError) console.error("[profiles] signup save", profileError);
+    }
     toast.success("Account created!");
     navigate({ to: "/dashboard", replace: true });
+
   };
 
 
