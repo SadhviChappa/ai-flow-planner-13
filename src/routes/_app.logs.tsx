@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { AiInsightsPanel } from "@/components/ai-insights-panel";
+import { useWorkContext } from "@/hooks/use-work-context";
 import { EmptyState } from "@/components/empty-state";
 import { ListSkeleton } from "@/components/loading-skeletons";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -62,6 +64,7 @@ function LogsPage() {
   const [editing, setEditing] = useState<DailyLog | null>(null);
   const [form, setForm] = useState(emptyForm);
   const { confirm, dialog } = useConfirm();
+  const aiContext = useWorkContext(todayISO());
 
 
   const openNew = () => {
@@ -177,6 +180,8 @@ function LogsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AiInsightsPanel context={aiContext} />
 
 
       {loading ? (
