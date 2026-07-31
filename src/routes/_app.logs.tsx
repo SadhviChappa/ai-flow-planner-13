@@ -181,6 +181,8 @@ function LogsPage() {
         </Card>
       </div>
 
+      <AiInsightsPanel context={aiContext} />
+
 
       {loading ? (
         <ListSkeleton count={4} />
