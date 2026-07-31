@@ -64,6 +64,7 @@ function LogsPage() {
   const [editing, setEditing] = useState<DailyLog | null>(null);
   const [form, setForm] = useState(emptyForm);
   const { confirm, dialog } = useConfirm();
+  const aiContext = useWorkContext(todayISO());
 
 
   const openNew = () => {
