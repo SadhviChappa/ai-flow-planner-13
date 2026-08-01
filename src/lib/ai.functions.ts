@@ -35,92 +35,79 @@ export const getAiStatus = createServerFn({ method: "GET" }).handler(async () =>
   return { configured: isGeminiConfigured(), model: GEMINI_MODEL };
 });
 
-export const generateDailySummary = createServerFn({ method: "POST" })
+/** Single Gemini call returning summary + productivity + tomorrow's plan. */
+export const generateWorkInsights = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => WorkContextSchema.parse(input))
-  .handler(async ({ data }): Promise<AiResponse<DailySummaryResult>> => {
-    const { generateJson, runAi, describeContext, AI_SYSTEM_PROMPT } = await import("./ai.server");
-    return runAi(() =>
-      generateJson<DailySummaryResult>({
-        system: AI_SYSTEM_PROMPT,
-        prompt:
-          "Write a professional daily work report from the data below. " +
-          "The summary should be 3-5 sentences in a calm, factual tone.\n\n" +
-          describeContext(data),
-        schema: {
-          type: "object",
-          properties: {
-            headline: { type: "string" },
-            summary: { type: "string" },
-            completed: { type: "array", items: { type: "string" } },
-            pending: { type: "array", items: { type: "string" } },
-            highlights: { type: "array", items: { type: "string" } },
-          },
-          required: ["headline", "summary", "completed", "pending", "highlights"],
-        },
-      }),
-    );
-  });
-
-export const analyzeProductivity = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => WorkContextSchema.parse(input))
-  .handler(async ({ data }): Promise<AiResponse<ProductivityResult>> => {
+  .handler(async ({ data }): Promise<AiResponse<AiInsightsResult>> => {
     const { generateJson, runAi, describeContext, AI_SYSTEM_PROMPT } = await import("./ai.server");
     return runAi(async () => {
-      const result = await generateJson<ProductivityResult>({
+      const result = await generateJson<AiInsightsResult>({
         system: AI_SYSTEM_PROMPT,
         prompt:
-          "Analyse today's work and rate productivity from 0 to 100. " +
-          "Give a short label for the score (e.g. 'Strong focus day'), a one-paragraph rationale, " +
-          "2-4 concrete strengths and 2-4 specific improvement suggestions.\n\n" +
+          "From the work data below, produce ONE JSON object with three sections:\n" +
+          "1. summary: a professional daily work report — a short headline, a 3-5 sentence factual summary, " +
+          "the completed work items, the pending work items, and short highlights.\n" +
+          "2. productivity: a score from 0 to 100, a short score label (e.g. 'Strong focus day'), a one-paragraph " +
+          "rationale, 2-4 concrete strengths and 2-4 specific improvement suggestions.\n" +
+          "3. plan: a realistic plan for tomorrow — a one-line primary focus, a schedule of 4-7 time blocks between " +
+          "09:00 and 17:00, and 1-3 things to watch out for.\n\n" +
           describeContext(data),
         schema: {
           type: "object",
           properties: {
-            score: { type: "number" },
-            scoreLabel: { type: "string" },
-            rationale: { type: "string" },
-            strengths: { type: "array", items: { type: "string" } },
-            improvements: { type: "array", items: { type: "string" } },
+            summary: {
+              type: "object",
+              properties: {
+                headline: { type: "string" },
+                summary: { type: "string" },
+                completed: { type: "array", items: { type: "string" } },
+                pending: { type: "array", items: { type: "string" } },
+                highlights: { type: "array", items: { type: "string" } },
+              },
+              required: ["headline", "summary", "completed", "pending", "highlights"],
+            },
+            productivity: {
+              type: "object",
+              properties: {
+                score: { type: "number" },
+                scoreLabel: { type: "string" },
+                rationale: { type: "string" },
+                strengths: { type: "array", items: { type: "string" } },
+                improvements: { type: "array", items: { type: "string" } },
+              },
+              required: ["score", "scoreLabel", "rationale", "strengths", "improvements"],
+            },
+            plan: {
+              type: "object",
+              properties: {
+                focus: { type: "string" },
+                schedule: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      time: { type: "string" },
+                      item: { type: "string" },
+                      why: { type: "string" },
+                    },
+                    required: ["time", "item"],
+                  },
+                },
+                watchOuts: { type: "array", items: { type: "string" } },
+              },
+              required: ["focus", "schedule", "watchOuts"],
+            },
           },
-          required: ["score", "scoreLabel", "rationale", "strengths", "improvements"],
+          required: ["summary", "productivity", "plan"],
         },
       });
-      return { ...result, score: Math.max(0, Math.min(100, Math.round(result.score ?? 0))) };
-    });
-  });
 
-export const planTomorrow = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => WorkContextSchema.parse(input))
-  .handler(async ({ data }): Promise<AiResponse<TomorrowPlanResult>> => {
-    const { generateJson, runAi, describeContext, AI_SYSTEM_PROMPT } = await import("./ai.server");
-    return runAi(() =>
-      generateJson<TomorrowPlanResult>({
-        system: AI_SYSTEM_PROMPT,
-        prompt:
-          "Propose a realistic plan for tomorrow based on pending tasks, deadlines and today's progress. " +
-          "Return a one-line primary focus, a schedule of 4-7 time blocks between 09:00 and 17:00, " +
-          "and 1-3 things to watch out for.\n\n" +
-          describeContext(data),
-        schema: {
-          type: "object",
-          properties: {
-            focus: { type: "string" },
-            schedule: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  time: { type: "string" },
-                  item: { type: "string" },
-                  why: { type: "string" },
-                },
-                required: ["time", "item"],
-              },
-            },
-            watchOuts: { type: "array", items: { type: "string" } },
-          },
-          required: ["focus", "schedule", "watchOuts"],
+      return {
+        ...result,
+        productivity: {
+          ...result.productivity,
+          score: Math.max(0, Math.min(100, Math.round(result.productivity?.score ?? 0))),
         },
-      }),
-    );
+      };
+    });
   });
