@@ -18,11 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  analyzeProductivity,
-  generateDailySummary,
-  planTomorrow,
-} from "@/lib/ai.functions";
+import { generateWorkInsights } from "@/lib/ai.functions";
 import type {
   DailySummaryResult,
   ProductivityResult,
