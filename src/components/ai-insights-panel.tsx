@@ -34,9 +34,7 @@ interface Props {
 }
 
 export function AiInsightsPanel({ context, compact }: Props) {
-  const runSummary = useServerFn(generateDailySummary);
-  const runProductivity = useServerFn(analyzeProductivity);
-  const runPlan = useServerFn(planTomorrow);
+  const runInsights = useServerFn(generateWorkInsights);
 
   const [loading, setLoading] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
@@ -56,23 +54,18 @@ export function AiInsightsPanel({ context, compact }: Props) {
     setError(null);
     setNotConfigured(false);
     try {
-      const [s, p, t] = await Promise.all([
-        runSummary({ data: context }),
-        runProductivity({ data: context }),
-        runPlan({ data: context }),
-      ]);
+      const result = await runInsights({ data: context });
 
-      const failure = [s, p, t].find((r) => !r.ok);
-      if (failure) {
-        setNotConfigured(!failure.configured);
-        setError(failure.error ?? "AI generation failed.");
-        if (failure.configured) toast.error(failure.error ?? "AI generation failed.");
+      if (!result.ok) {
+        setNotConfigured(!result.configured);
+        setError(result.error ?? "AI generation failed.");
+        if (result.configured) toast.error(result.error ?? "AI generation failed.");
         return;
       }
 
-      setSummary(s.data ?? null);
-      setProductivity(p.data ?? null);
-      setPlan(t.data ?? null);
+      setSummary(result.data?.summary ?? null);
+      setProductivity(result.data?.productivity ?? null);
+      setPlan(result.data?.plan ?? null);
       setGeneratedAt(new Date());
       toast.success("AI insights generated");
     } catch {
