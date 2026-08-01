@@ -46,6 +46,12 @@ export interface TomorrowPlanResult {
   watchOuts: string[];
 }
 
+export interface AiInsightsResult {
+  summary: DailySummaryResult;
+  productivity: ProductivityResult;
+  plan: TomorrowPlanResult;
+}
+
 export interface AiResponse<T> {
   ok: boolean;
   configured: boolean;
