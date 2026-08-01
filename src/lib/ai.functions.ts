@@ -1,11 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type {
-  AiResponse,
-  DailySummaryResult,
-  ProductivityResult,
-  TomorrowPlanResult,
-} from "./ai-types";
+import type { AiInsightsResult, AiResponse } from "./ai-types";
 
 const TaskItem = z.object({
   name: z.string(),
