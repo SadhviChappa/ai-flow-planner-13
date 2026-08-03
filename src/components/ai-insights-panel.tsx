@@ -1,3 +1,4 @@
+import { exportPdfReport } from "@/services/pdf.service";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -77,6 +78,26 @@ export function AiInsightsPanel({ context, compact }: Props) {
   };
 
   const hasResult = summary || productivity || plan;
+  const exportReport = () => {
+  if (!summary || !productivity || !plan) {
+    toast.error("Generate AI Summary first.");
+    return;
+  }
+
+  exportPdfReport({
+    date: format(new Date(), "dd-MM-yyyy"),
+    hours: context.hoursLogged,
+    completed: summary.completed.length,
+    pending: summary.pending.length,
+    summary: summary.summary,
+    productivityScore: productivity.score,
+    strengths: productivity.strengths,
+    improvements: productivity.improvements,
+    tomorrowPlan: plan.schedule.map(
+      (item) => `${item.time} - ${item.item}`
+    ),
+  });
+}; 
 
   return (
     <div className="space-y-4">
@@ -90,10 +111,15 @@ export function AiInsightsPanel({ context, compact }: Props) {
               Summary, productivity analysis and tomorrow's plan from today's work.
             </p>
           </div>
-          <Button onClick={generate} disabled={loading} className="gap-2">
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            {loading ? "Generating…" : hasResult ? "Regenerate" : "Generate AI Summary"}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={generate} disabled={loading} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              {loading ? "Generating…" : hasResult ? "Regenerate" : "Generate AI Summary"}
+            </Button>
+            <Button variant="outline" onClick={exportReport} disabled={!hasResult}>
+              Export PDF
+            </Button>
+          </div>
         </div>
       )}
 
