@@ -1,4 +1,6 @@
 import { exportPdfReport } from "@/services/pdf.service";
+import { useStore } from "@/lib/storage";
+import { MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -44,6 +46,7 @@ export function AiInsightsPanel({ context, compact }: Props) {
   const [summary, setSummary] = useState<DailySummaryResult | null>(null);
   const [productivity, setProductivity] = useState<ProductivityResult | null>(null);
   const [plan, setPlan] = useState<TomorrowPlanResult | null>(null);
+  const [auth] = useStore("auth");
 
   const generate = async () => {
     if (loading) return;
@@ -97,6 +100,44 @@ export function AiInsightsPanel({ context, compact }: Props) {
       (item) => `${item.time} - ${item.item}`
     ),
   });
+};
+const sendWhatsApp = () => {
+  if (!summary || !productivity || !plan) {
+    toast.error("Generate AI Summary first.");
+    return;
+  }
+
+  const phone = auth?.mentorPhone?.trim();
+    if (!phone) {
+      toast.error("Please save your mentor's WhatsApp number in Settings first.");
+      return;
+    }
+
+  const message = `📅 Daily Work Report
+
+👤 Student: Sadhvi
+
+⏱ Hours Worked: ${context.hoursLogged}
+
+✅ Completed Tasks: ${summary.completed.length}
+⏳ Pending Tasks: ${summary.pending.length}
+
+📊 Productivity Score: ${productivity.score}%
+
+📝 AI Summary:
+${summary.summary}
+
+📅 Tomorrow Plan:
+${plan.schedule
+  .map((item) => `• ${item.time} - ${item.item}`)
+  .join("\n")}
+`;
+
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+  console.log(url);
+
+  window.location.href = url;
 }; 
 
   return (
@@ -118,6 +159,9 @@ export function AiInsightsPanel({ context, compact }: Props) {
             </Button>
             <Button variant="outline" onClick={exportReport} disabled={!hasResult}>
               Export PDF
+            </Button>
+            <Button variant="default" onClick={sendWhatsApp} disabled={!hasResult} className="gap-2">
+                <MessageCircle className="h-4 w-4" />Send WhatsApp
             </Button>
           </div>
         </div>

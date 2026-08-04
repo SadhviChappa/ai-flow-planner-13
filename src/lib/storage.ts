@@ -43,7 +43,11 @@ export interface DailyLog {
   createdAt: string;
 }
 
-export type AuthShape = { email: string; name: string } | null;
+export type AuthShape = {
+  email: string;
+  name: string;
+  mentorPhone: string;
+} | null;
 
 type Shape = {
   projects: Project[];
@@ -395,12 +399,13 @@ function useAuthStore(): [AuthShape, (v: AuthShape | ((p: AuthShape) => AuthShap
         (user.user_metadata?.full_name as string) ||
         user.email?.split("@")[0] ||
         "",
+      mentorPhone: "",
     };
     setProfile(fallback);
     (async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, email")
+        .select("full_name, email, mentor_phone")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled || error) return;
@@ -411,13 +416,19 @@ function useAuthStore(): [AuthShape, (v: AuthShape | ((p: AuthShape) => AuthShap
           .from("profiles")
           .upsert({ id: user.id, full_name: metaName, email: user.email ?? "" });
         if (upsertError) console.error("[profiles] backfill", upsertError);
-        if (!cancelled) setProfile({ email: user.email ?? fallback.email, name: metaName });
+        if (!cancelled)
+            setProfile({
+              email: user.email ?? fallback.email,
+              name: metaName,
+              mentorPhone: str(data?.mentor_phone),
+            });
         return;
       }
       if (!data) return;
       setProfile({
-        email: str(data.email) || fallback.email,
-        name: str(data.full_name) || fallback.name,
+          email: str(data.email) || fallback.email,
+          name: str(data.full_name) || fallback.name,
+          mentorPhone: str(data.mentor_phone),
       });
     })();
 
@@ -440,7 +451,12 @@ function useAuthStore(): [AuthShape, (v: AuthShape | ((p: AuthShape) => AuthShap
       void (async () => {
         const { error } = await supabase
           .from("profiles")
-          .upsert({ id: userId, full_name: next.name.trim(), email: next.email.trim() })
+          .upsert({
+             id: userId,
+             full_name: next.name.trim(),
+             email: next.email.trim(),
+             mentor_phone: next.mentorPhone.trim(),
+          })
           .eq("id", userId);
         if (error) {
           console.error("[profiles] update", error);

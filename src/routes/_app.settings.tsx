@@ -31,11 +31,13 @@ function SettingsPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mentorPhone, setMentorPhone] = useState("");
   const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     setName(auth?.name ?? "");
     setEmail(auth?.email ?? "");
+    setMentorPhone(auth?.mentorPhone ?? "");
   }, [auth]);
 
   const save = () => {
@@ -45,7 +47,11 @@ function SettingsPage() {
       toast.error(nameError ?? emailError ?? "Check your details");
       return;
     }
-    setAuth({ name: name.trim(), email: email.trim() });
+    setAuth({
+      name: name.trim(),
+      email: email.trim(),
+      mentorPhone: mentorPhone.trim(),
+    });
     toast.success("Profile saved");
   };
 
@@ -80,6 +86,20 @@ function SettingsPage() {
             <Label htmlFor="e">Email</Label>
             <Input id="e" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="mentorPhone">Mentor WhatsApp Number</Label>
+            <Input
+              id="mentorPhone"
+              placeholder="919876543210"
+              value={mentorPhone}
+              onChange={(e) => setMentorPhone(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              Enter the number with country code (Example: 919876543210)
+            </p>
+          </div>
+
           <div className="sm:col-span-2">
             <Button onClick={save}>Save changes</Button>
           </div>
