@@ -1,194 +1,134 @@
-# AI Work Planner
+# 🚀 AI Work Planner
 
-Build a modern responsive web application called AI Work Planner.
+AI Work Planner is a full-stack web application that helps users manage their daily work efficiently. Users can organize projects, manage tasks, record daily logs, generate AI-powered work summaries, export reports as PDF, and share reports with mentors through WhatsApp.
 
-The application should have:
+---
 
-- Login page
+## ✨ Features
 
-- Signup page
+- 🔐 User Authentication (Sign Up & Login)
+- 📁 Project Management
+- ✅ Task Management
+- 📝 Daily Work Logs
+- 🤖 AI Summary using Google Gemini
+- 📊 Productivity Analysis
+- 📅 Tomorrow's Work Plan
+- 📄 Export AI Report as PDF
+- 💬 Share Report via WhatsApp
+- 👤 Mentor WhatsApp Number Settings
+- ☁️ Supabase Database Integration
 
-- Dashboard
+---
 
-- Sidebar navigation
+## 🛠️ Tech Stack
 
-The sidebar should contain:
+### Frontend
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
 
-Dashboard
+### Backend & Database
+- Supabase
 
+### AI
+- Google Gemini API
+
+### Other Libraries
+- jsPDF
+- React Router
+- Sonner (Toast Notifications)
+
+---
+
+## 📂 Project Workflow
+
+```text
+Login
+   ↓
 Projects
-
+   ↓
 Tasks
-
+   ↓
 Daily Logs
+   ↓
+AI Summary
+   ↓
+Export PDF
+   ↓
+Share via WhatsApp
+```
 
-Reports
+---
 
-Settings
+## 🚀 Installation
 
-Use a modern UI with Tailwind CSS.
+### Clone the Repository
 
-Do not implement backend yet.
+```bash
+git clone https://github.com/SadhviChappa/ai-flow-planner-13.git
+```
 
-Only build the frontend.                                                                                                                                                                                                                                                                                                     Create a Project page.
+### Install Dependencies
 
-Users should be able to:
+```bash
+npm install
+```
 
-- Create a project
+### Create Environment File
 
-- Edit a project
+Create a `.env` file:
 
-- Delete a project
+```env
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+```
 
-Each project should include:
+### Start Development Server
 
-Project Name
-
-Description
-
-Deadline
-
-Priority
-
-Status
-
-Display projects as modern cards.                                                                                                            Create a complete Task Management module for my AI Work Planner.
-
-Requirements:
-
-1. Each project can contain multiple tasks.
-
-2. Each task should have:
-
-- Task Name
-
-- Description
-
-- Due Date
-
-- Priority (Low, Medium, High)
-
-- Status (Not Started, In Progress, Completed)
-
-- Estimated Hours
-
-- Actual Hours
-
-3. Features:
-
-- Add Task
-
-- Edit Task
-
-- Delete Task
-
-- Mark as Complete
-
-- Search Tasks
-
-- Filter by Status
-
-- Filter by Priority
-
-- Sort by Due Date
-
-4. UI:
-
-- Modern cards/table layout
-
-- Progress bar showing completed tasks
-
-- Color-coded priority badges
-
-- Responsive for mobile and desktop
-
-Do not use mock data.
-
-Prepare the UI so it can be connected to Supabase later.                                                                 Create a Daily Work Log page.
-
-Each daily log should include:
-
-- Date
-
-- Project
-
-- Task Worked On
-
-- Hours Worked
-
-- Work Description
-
-- Challenges Faced
-
-- Today's Achievement
-
-- Tomorrow's Plan
-
-Features:
-
-- Add Log
-
-- Edit Log
-
-- Delete Log
-
-- View Previous Logs
-
-Display previous logs in a clean timeline.
-
-Show total hours worked today.                                                                                                                            Upgrade the Dashboard.
-
-Display:
-
-- Total Projects
-
-- Total Tasks
-
-- Completed Tasks
-
-- Pending Tasks
-
-- In Progress Tasks
-
-- Overall Progress Percentage
-
-- Today's Working Hours
-
-- Upcoming Deadlines
-
-- Recent Daily Logs
-
-Add:
-
-- Progress cards
-
-- Pie chart
-
-- Weekly productivity chart
-
-- Calendar widget
-
-- Recent activity feed
-
-Keep the UI clean and modern.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/1cd7135e-9bf8-44c5-b58e-061501b2a820).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+```bash
 npm run dev
 ```
+
+---
+
+## 📸 Screenshots
+
+*(To be added later)*
+
+- Login Page
+- Dashboard
+- Projects
+- Tasks
+- Daily Logs
+- AI Summary
+- PDF Export
+- WhatsApp Sharing
+
+---
+
+## 🔮 Future Improvements
+
+- 📧 Email Reports
+- ⏰ Automatic Scheduled Reports
+- 📈 Analytics Dashboard
+- 📱 Mobile Optimization
+- 🔔 Notifications & Reminders
+
+---
+
+## 👩‍💻 Developer
+
+**Chappa Sadhvi**
+
+Final Year B.Tech (Information Technology)
+
+Vignan's Institute of Engineering for Women
+
+---
+
+## 📜 License
+
+This project is created for learning and academic purposes.
