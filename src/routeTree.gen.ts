@@ -9,33 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppTasksRouteImport } from './routes/_app.tasks'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppReportsRouteImport } from './routes/_app.reports'
-import { Route as AppProjectsRouteImport } from './routes/_app.projects'
-import { Route as AppLogsRouteImport } from './routes/_app.logs'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AppAiSummaryRouteImport } from './routes/_app.ai-summary'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppLogsRouteImport } from './routes/_app.logs'
+import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppTasksRouteImport } from './routes/_app.tasks'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -43,38 +37,24 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppTasksRoute = AppTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AppRoute,
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProjectsRoute = AppProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLogsRoute = AppLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
+const AppAiSummaryRoute = AppAiSummaryRouteImport.update({
+  id: '/ai-summary',
+  path: '/ai-summary',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -82,9 +62,29 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAiSummaryRoute = AppAiSummaryRouteImport.update({
-  id: '/ai-summary',
-  path: '/ai-summary',
+const AppLogsRoute = AppLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsRoute = AppProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksRoute = AppTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -189,32 +189,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -224,46 +203,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/tasks': {
-      id: '/_app/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AppTasksRouteImport
-      parentRoute: typeof AppRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/reports': {
-      id: '/_app/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/projects': {
-      id: '/_app/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof AppProjectsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/logs': {
-      id: '/_app/logs'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof AppLogsRouteImport
+    '/_app/ai-summary': {
+      id: '/_app/ai-summary'
+      path: '/ai-summary'
+      fullPath: '/ai-summary'
+      preLoaderRoute: typeof AppAiSummaryRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -273,11 +245,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/ai-summary': {
-      id: '/_app/ai-summary'
-      path: '/ai-summary'
-      fullPath: '/ai-summary'
-      preLoaderRoute: typeof AppAiSummaryRouteImport
+    '/_app/logs': {
+      id: '/_app/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof AppLogsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects': {
+      id: '/_app/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
   }
