@@ -4,30 +4,26 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    "baseUrl": ".",
     "moduleResolution": "Bundler",
+    "noEmit": true,
     "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": false,
-    "verbatimModuleSyntax": false,
     "isolatedModules": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "noEmit": true,
     "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.d.ts",
+    "src",
     "vite.config.ts",
     "eslint.config.js"
   ]
