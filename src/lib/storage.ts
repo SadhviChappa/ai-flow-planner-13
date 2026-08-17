@@ -47,6 +47,7 @@ export type AuthShape = {
   email: string;
   name: string;
   mentorPhone: string;
+  geminiApiKey?: string;
 } | null;
 
 type Shape = {

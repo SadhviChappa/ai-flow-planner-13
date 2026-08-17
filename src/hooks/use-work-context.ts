@@ -4,6 +4,7 @@ import type { WorkContext } from "@/lib/ai-types";
 
 /** Builds the AI work context (today's tasks, hours, logs) from the live store. */
 export function useWorkContext(date: string = todayISO()): WorkContext {
+  const [auth] = useStore("auth");
   const [projects] = useStore("projects");
   const [tasks] = useStore("tasks");
   const [logs] = useStore("logs");
@@ -16,6 +17,7 @@ export function useWorkContext(date: string = todayISO()): WorkContext {
 
     return {
       date,
+      apiKey: auth?.geminiApiKey || undefined,
       hoursLogged: Number(dayLogs.reduce((s, l) => s + Number(l.hours || 0), 0).toFixed(2)),
       completedTasks: tasks
         .filter((t) => t.status === "Completed")
@@ -47,7 +49,7 @@ export function useWorkContext(date: string = todayISO()): WorkContext {
         tomorrowPlan: l.tomorrowPlan || undefined,
       })),
     };
-  }, [projects, tasks, logs, date]);
+  }, [auth, projects, tasks, logs, date]);
 }
 
 export function hasWorkData(ctx: WorkContext) {

@@ -22,6 +22,7 @@ export interface WorkContext {
   completedTasks: AiTaskItem[];
   pendingTasks: AiTaskItem[];
   logs: AiLogItem[];
+  apiKey?: string;
 }
 
 export interface DailySummaryResult {

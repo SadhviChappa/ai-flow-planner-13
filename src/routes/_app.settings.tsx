@@ -32,12 +32,14 @@ function SettingsPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mentorPhone, setMentorPhone] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
   const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     setName(auth?.name ?? "");
     setEmail(auth?.email ?? "");
     setMentorPhone(auth?.mentorPhone ?? "");
+    setGeminiApiKey(auth?.geminiApiKey ?? "");
   }, [auth]);
 
   const save = () => {
@@ -51,8 +53,9 @@ function SettingsPage() {
       name: name.trim(),
       email: email.trim(),
       mentorPhone: mentorPhone.trim(),
+      geminiApiKey: geminiApiKey.trim() || undefined,
     });
-    toast.success("Profile saved");
+    toast.success("Settings saved");
   };
 
   const clearAll = () => {
@@ -76,7 +79,7 @@ function SettingsPage() {
       <PageHeader title="Settings" description="Manage your account and workspace." />
 
       <Card className="card-soft">
-        <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Profile & Contact</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="n">Name</Label>
@@ -97,6 +100,20 @@ function SettingsPage() {
             />
             <p className="text-sm text-muted-foreground">
               Enter the number with country code (Example: 919876543210)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="geminiApiKey">Google Gemini API Key (Optional)</Label>
+            <Input
+              id="geminiApiKey"
+              type="password"
+              placeholder="AIzaSy..."
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              Get a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary underline">Google AI Studio</a>.
             </p>
           </div>
 

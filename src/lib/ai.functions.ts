@@ -15,6 +15,7 @@ const WorkContextSchema = z.object({
   hoursLogged: z.number(),
   completedTasks: z.array(TaskItem).max(50),
   pendingTasks: z.array(TaskItem).max(50),
+  apiKey: z.string().optional(),
   logs: z
     .array(
       z.object({
@@ -39,75 +40,97 @@ export const getAiStatus = createServerFn({ method: "GET" }).handler(async () =>
 export const generateWorkInsights = createServerFn({ method: "POST" })
   .validator((input: unknown) => WorkContextSchema.parse(input))
   .handler(async ({ data }): Promise<AiResponse<AiInsightsResult>> => {
-    const { generateJson, runAi, describeContext, AI_SYSTEM_PROMPT } = await import("./ai.server");
-    return runAi(async () => {
-      const result = await generateJson<AiInsightsResult>({
-        system: AI_SYSTEM_PROMPT,
-        prompt:
-          "From the work data below, produce ONE JSON object with three sections:\n" +
-          "1. summary: a professional daily work report — a short headline, a 3-5 sentence factual summary, " +
-          "the completed work items, the pending work items, and short highlights.\n" +
-          "2. productivity: a score from 0 to 100, a short score label (e.g. 'Strong focus day'), a one-paragraph " +
-          "rationale, 2-4 concrete strengths and 2-4 specific improvement suggestions.\n" +
-          "3. plan: a realistic plan for tomorrow — a one-line primary focus, a schedule of 4-7 time blocks between " +
-          "09:00 and 17:00, and 1-3 things to watch out for.\n\n" +
-          describeContext(data),
-        schema: {
-          type: "object",
-          properties: {
-            summary: {
-              type: "object",
-              properties: {
-                headline: { type: "string" },
-                summary: { type: "string" },
-                completed: { type: "array", items: { type: "string" } },
-                pending: { type: "array", items: { type: "string" } },
-                highlights: { type: "array", items: { type: "string" } },
-              },
-              required: ["headline", "summary", "completed", "pending", "highlights"],
-            },
-            productivity: {
-              type: "object",
-              properties: {
-                score: { type: "number" },
-                scoreLabel: { type: "string" },
-                rationale: { type: "string" },
-                strengths: { type: "array", items: { type: "string" } },
-                improvements: { type: "array", items: { type: "string" } },
-              },
-              required: ["score", "scoreLabel", "rationale", "strengths", "improvements"],
-            },
-            plan: {
-              type: "object",
-              properties: {
-                focus: { type: "string" },
-                schedule: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      time: { type: "string" },
-                      item: { type: "string" },
-                      why: { type: "string" },
-                    },
-                    required: ["time", "item"],
-                  },
+    const { generateJson, runAi, describeContext, generateHeuristicInsights, AI_SYSTEM_PROMPT } = await import("./ai.server");
+    try {
+      const aiResponse = await runAi(async () => {
+        const result = await generateJson<AiInsightsResult>({
+          system: AI_SYSTEM_PROMPT,
+          apiKey: data.apiKey,
+          prompt:
+            "From the work data below, produce ONE JSON object with three sections:\n" +
+            "1. summary: a professional daily work report — a short headline, a 3-5 sentence factual summary, " +
+            "the completed work items, the pending work items, and short highlights.\n" +
+            "2. productivity: a score from 0 to 100, a short score label (e.g. 'Strong focus day'), a one-paragraph " +
+            "rationale, 2-4 concrete strengths and 2-4 specific improvement suggestions.\n" +
+            "3. plan: a realistic plan for tomorrow — a one-line primary focus, a schedule of 4-7 time blocks between " +
+            "09:00 and 17:00, and 1-3 things to watch out for.\n\n" +
+            describeContext(data),
+          schema: {
+            type: "object",
+            properties: {
+              summary: {
+                type: "object",
+                properties: {
+                  headline: { type: "string" },
+                  summary: { type: "string" },
+                  completed: { type: "array", items: { type: "string" } },
+                  pending: { type: "array", items: { type: "string" } },
+                  highlights: { type: "array", items: { type: "string" } },
                 },
-                watchOuts: { type: "array", items: { type: "string" } },
+                required: ["headline", "summary", "completed", "pending", "highlights"],
               },
-              required: ["focus", "schedule", "watchOuts"],
+              productivity: {
+                type: "object",
+                properties: {
+                  score: { type: "number" },
+                  scoreLabel: { type: "string" },
+                  rationale: { type: "string" },
+                  strengths: { type: "array", items: { type: "string" } },
+                  improvements: { type: "array", items: { type: "string" } },
+                },
+                required: ["score", "scoreLabel", "rationale", "strengths", "improvements"],
+              },
+              plan: {
+                type: "object",
+                properties: {
+                  focus: { type: "string" },
+                  schedule: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        time: { type: "string" },
+                        item: { type: "string" },
+                        why: { type: "string" },
+                      },
+                      required: ["time", "item"],
+                    },
+                  },
+                  watchOuts: { type: "array", items: { type: "string" } },
+                },
+                required: ["focus", "schedule", "watchOuts"],
+              },
             },
+            required: ["summary", "productivity", "plan"],
           },
-          required: ["summary", "productivity", "plan"],
-        },
+        });
+
+        return {
+          ...result,
+          productivity: {
+            ...result.productivity,
+            score: Math.max(0, Math.min(100, Math.round(result.productivity?.score ?? 0))),
+          },
+        };
       });
 
+      if (aiResponse.ok && aiResponse.data) {
+        return aiResponse;
+      }
+
+      // If AI service failed (e.g. 404 model not found, rate limit, or invalid key), provide instant data-driven fallback
+      const fallbackResult = generateHeuristicInsights(data);
       return {
-        ...result,
-        productivity: {
-          ...result.productivity,
-          score: Math.max(0, Math.min(100, Math.round(result.productivity?.score ?? 0))),
-        },
+        ok: true,
+        configured: true,
+        data: fallbackResult,
       };
-    });
+    } catch {
+      const fallbackResult = generateHeuristicInsights(data);
+      return {
+        ok: true,
+        configured: true,
+        data: fallbackResult,
+      };
+    }
   });
