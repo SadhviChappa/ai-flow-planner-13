@@ -16,9 +16,9 @@ const FALLBACK_MODELS = [GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "
 
 export function getGeminiApiKey(): string | undefined {
   const key =
-    process.env["GEMINI_API_KEY"] ??
-    process.env["GOOGLE_API_KEY"] ??
-    process.env["VITE_GEMINI_API_KEY"];
+    (typeof process !== "undefined" && process.env ? process.env["GEMINI_API_KEY"] ?? process.env["GOOGLE_API_KEY"] ?? process.env["VITE_GEMINI_API_KEY"] : undefined) ||
+    (typeof import.meta !== "undefined" && import.meta.env ? (import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY) : undefined) ||
+    "AQ.Ab8RN6LMOY4WX0yZZuLbFfD2wOBoeKPrHOxv0xXcuGrlWUuNnw";
   return key && key.trim() ? key.trim() : undefined;
 }
 
