@@ -9,10 +9,16 @@
 const GEMINI_BASE_URL =
   process.env["GEMINI_API_BASE_URL"] ?? "https://generativelanguage.googleapis.com/v1beta";
 
-export const GEMINI_MODEL = process.env["GEMINI_MODEL"] ?? "gemini-3.6-flash";
+export const GEMINI_MODEL =
+  process.env["GEMINI_MODEL"] ?? "gemini-2.5-flash";
+
+const FALLBACK_MODELS = [GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
 export function getGeminiApiKey(): string | undefined {
-  const key = process.env["GEMINI_API_KEY"] ?? process.env["GOOGLE_API_KEY"];
+  const key =
+    process.env["GEMINI_API_KEY"] ??
+    process.env["GOOGLE_API_KEY"] ??
+    process.env["VITE_GEMINI_API_KEY"];
   return key && key.trim() ? key.trim() : undefined;
 }
 
@@ -52,56 +58,71 @@ export async function generateJson<T>(options: {
   const apiKey = getGeminiApiKey();
   if (!apiKey) throw new AiNotConfiguredError();
 
-  let response: Response;
-  try {
-    response = await fetch(
-      `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: options.system }] },
-          contents: [{ role: "user", parts: [{ text: options.prompt }] }],
-          generationConfig: {
-            temperature: options.temperature ?? 0.6,
-            responseMimeType: "application/json",
-            responseSchema: options.schema,
+  const modelsToTry = Array.from(new Set(FALLBACK_MODELS));
+  let lastError: AiRequestError | null = null;
+
+  for (const modelName of modelsToTry) {
+    let response: Response;
+    try {
+      response = await fetch(
+        `${GEMINI_BASE_URL}/models/${modelName}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
           },
-        }),
-      },
-    );
-  } catch {
-    throw new AiRequestError("Could not reach the AI service. Check your connection and try again.", 503);
-  }
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    if (response.status === 429) {
-      throw new AiRequestError("AI rate limit reached. Please try again in a moment.", 429);
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: options.system }] },
+            contents: [{ role: "user", parts: [{ text: options.prompt }] }],
+            generationConfig: {
+              temperature: options.temperature ?? 0.6,
+              responseMimeType: "application/json",
+              responseSchema: options.schema,
+            },
+          }),
+        },
+      );
+    } catch {
+      throw new AiRequestError("Could not reach the AI service. Check your connection and try again.", 503);
     }
-    if (response.status === 401 || response.status === 403) {
-      throw new AiRequestError("The AI API key was rejected. Please check your GEMINI_API_KEY.", response.status);
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      if (response.status === 404 && modelName !== modelsToTry[modelsToTry.length - 1]) {
+        // Try next fallback model
+        continue;
+      }
+      if (response.status === 429) {
+        throw new AiRequestError("AI rate limit reached. Please try again in a moment.", 429);
+      }
+      if (response.status === 401 || response.status === 403) {
+        throw new AiRequestError("The AI API key was rejected. Please check your GEMINI_API_KEY.", response.status);
+      }
+      lastError = new AiRequestError(
+        `AI request failed (${response.status}). ${body.slice(0, 200)}`.trim(),
+        response.status,
+      );
+      continue;
     }
-    throw new AiRequestError(
-      `AI request failed (${response.status}). ${body.slice(0, 200)}`.trim(),
-      response.status,
-    );
+
+    const data = (await response.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+    if (!text.trim()) {
+      lastError = new AiRequestError("The AI returned an empty response. Please try again.");
+      continue;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new AiRequestError("The AI returned an unexpected format. Please try again.");
+    }
   }
 
-  const data = (await response.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-  };
-  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-  if (!text.trim()) throw new AiRequestError("The AI returned an empty response. Please try again.");
-
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new AiRequestError("The AI returned an unexpected format. Please try again.");
-  }
+  throw lastError ?? new AiRequestError("Failed to generate AI insights.");
 }
 
 /* ------------------------- prompt + execution helpers ---------------------- */

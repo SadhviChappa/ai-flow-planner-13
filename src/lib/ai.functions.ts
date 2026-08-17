@@ -37,7 +37,7 @@ export const getAiStatus = createServerFn({ method: "GET" }).handler(async () =>
 
 /** Single Gemini call returning summary + productivity + tomorrow's plan. */
 export const generateWorkInsights = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => WorkContextSchema.parse(input))
+  .validator((input: unknown) => WorkContextSchema.parse(input))
   .handler(async ({ data }): Promise<AiResponse<AiInsightsResult>> => {
     const { generateJson, runAi, describeContext, AI_SYSTEM_PROMPT } = await import("./ai.server");
     return runAi(async () => {

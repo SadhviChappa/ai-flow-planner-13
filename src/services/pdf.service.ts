@@ -1,77 +1,158 @@
 import { jsPDF } from "jspdf";
 
 export interface PdfReportData {
+  studentName?: string;
   date: string;
   hours: number;
   completed: number;
   pending: number;
   summary: string;
   productivityScore: number;
+  scoreLabel?: string;
   strengths: string[];
   improvements: string[];
   tomorrowPlan: string[];
 }
 
 export function exportPdfReport(data: PdfReportData) {
-  const doc = new jsPDF();
-
-  let y = 20;
-
-  doc.setFontSize(20);
-  doc.text("AI Work Planner Report", 20, y);
-
-  y += 15;
-  doc.setFontSize(12);
-
-  doc.text(`Date: ${data.date}`, 20, y);
-  y += 8;
-
-  doc.text(`Hours Worked: ${data.hours}`, 20, y);
-  y += 8;
-
-  doc.text(`Completed Tasks: ${data.completed}`, 20, y);
-  y += 8;
-
-  doc.text(`Pending Tasks: ${data.pending}`, 20, y);
-  y += 12;
-
-  doc.text("AI Summary:", 20, y);
-  y += 8;
-
-  const summaryLines = doc.splitTextToSize(data.summary, 170);
-  doc.text(summaryLines, 20, y);
-  y += summaryLines.length * 7 + 5;
-
-  doc.text(`Productivity Score: ${data.productivityScore}%`, 20, y);
-  y += 12;
-
-  doc.text("Strengths:", 20, y);
-  y += 8;
-
-  data.strengths.forEach((item) => {
-    doc.text(`• ${item}`, 25, y);
-    y += 7;
+  const doc = new jsPDF({
+    unit: "mm",
+    format: "a4",
   });
 
-  y += 5;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
 
-  doc.text("Improvements:", 20, y);
-  y += 8;
+  const ensureSpace = (neededHeight: number) => {
+    if (y + neededHeight > pageHeight - 20) {
+      doc.addPage();
+      y = margin;
+      drawSubHeader();
+    }
+  };
 
-  data.improvements.forEach((item) => {
-    doc.text(`• ${item}`, 25, y);
-    y += 7;
+  const drawSubHeader = () => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+    doc.text("AI Work Planner — Daily Report (cont.)", margin, y);
+    y += 8;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 8;
+  };
+
+  // Header Banner
+  doc.setFillColor(79, 70, 229); // Indigo/Primary
+  doc.roundedRect(margin, y, contentWidth, 26, 3, 3, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text("AI Work Planner Report", margin + 6, y + 10);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(224, 231, 255);
+  const subtitle = `${data.studentName ? `User: ${data.studentName}  |  ` : ""}Date: ${data.date}`;
+  doc.text(subtitle, margin + 6, y + 18);
+
+  y += 34;
+
+  // Key Metrics Grid
+  const cardWidth = (contentWidth - 9) / 4;
+  const cardHeight = 18;
+  const metrics = [
+    { label: "Hours Worked", value: `${data.hours}h` },
+    { label: "Completed", value: `${data.completed}` },
+    { label: "Pending", value: `${data.pending}` },
+    { label: "Productivity", value: `${data.productivityScore}%` },
+  ];
+
+  metrics.forEach((m, idx) => {
+    const x = margin + idx * (cardWidth + 3);
+    doc.setFillColor(245, 247, 250);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, "FD");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(m.label, x + 4, y + 6);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42);
+    doc.text(m.value, x + 4, y + 14);
   });
 
-  y += 5;
+  y += cardHeight + 10;
 
-  doc.text("Tomorrow Plan:", 20, y);
-  y += 8;
+  // AI Summary Section
+  ensureSpace(20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(30, 41, 59);
+  doc.text("AI Daily Summary", margin, y);
+  y += 6;
 
-  data.tomorrowPlan.forEach((item) => {
-    doc.text(`• ${item}`, 25, y);
-    y += 7;
-  });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(51, 65, 85);
+  const summaryLines = doc.splitTextToSize(data.summary || "No summary recorded.", contentWidth);
+  ensureSpace(summaryLines.length * 5 + 6);
+  doc.text(summaryLines, margin, y);
+  y += summaryLines.length * 5 + 8;
 
-  doc.save(`Work_Report_${data.date}.pdf`);
+  // Strengths & Improvements Sections
+  const renderBulletList = (title: string, items: string[], iconColor: [number, number, number]) => {
+    if (!items || items.length === 0) return;
+    ensureSpace(16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.text(title, margin, y);
+    y += 6;
+
+    items.forEach((item) => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(51, 65, 85);
+      const lines = doc.splitTextToSize(item, contentWidth - 8);
+      ensureSpace(lines.length * 5 + 2);
+
+      // Bullet dot
+      doc.setFillColor(...iconColor);
+      doc.circle(margin + 2, y - 1, 1.2, "F");
+
+      doc.text(lines, margin + 7, y);
+      y += lines.length * 5 + 2;
+    });
+    y += 4;
+  };
+
+  renderBulletList("Key Strengths & Wins", data.strengths, [22, 163, 74]);
+  renderBulletList("Areas for Improvement", data.improvements, [37, 99, 235]);
+  renderBulletList("Tomorrow's Plan & Focus", data.tomorrowPlan, [147, 51, 234]);
+
+  // Page Numbers Footer
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      `Page ${i} of ${totalPages}  •  Generated by AI Work Planner`,
+      pageWidth / 2,
+      pageHeight - 10,
+      { align: "center" },
+    );
+  }
+
+  const cleanDate = data.date.replace(/[^a-zA-Z0-9_-]/g, "_");
+  doc.save(`Work_Report_${cleanDate}.pdf`);
 }

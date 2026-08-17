@@ -1,6 +1,5 @@
 import { exportPdfReport } from "@/services/pdf.service";
 import { useStore } from "@/lib/storage";
-import { MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -13,6 +12,9 @@ import {
   Gauge,
   AlertTriangle,
   KeyRound,
+  MessageCircle,
+  Copy,
+  FileDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -80,65 +82,108 @@ export function AiInsightsPanel({ context, compact }: Props) {
     }
   };
 
-  const hasResult = summary || productivity || plan;
+  const hasResult = Boolean(summary || productivity || plan);
+
   const exportReport = () => {
-  if (!summary || !productivity || !plan) {
-    toast.error("Generate AI Summary first.");
-    return;
-  }
+    if (!summary || !productivity || !plan) {
+      toast.error("Generate AI Summary first.");
+      return;
+    }
 
-  exportPdfReport({
-    date: format(new Date(), "dd-MM-yyyy"),
-    hours: context.hoursLogged,
-    completed: summary.completed.length,
-    pending: summary.pending.length,
-    summary: summary.summary,
-    productivityScore: productivity.score,
-    strengths: productivity.strengths,
-    improvements: productivity.improvements,
-    tomorrowPlan: plan.schedule.map(
-      (item) => `${item.time} - ${item.item}`
-    ),
-  });
-};
-const sendWhatsApp = () => {
-  if (!summary || !productivity || !plan) {
-    toast.error("Generate AI Summary first.");
-    return;
-  }
+    exportPdfReport({
+      studentName: auth?.name || "Student",
+      date: format(new Date(), "dd-MM-yyyy"),
+      hours: context.hoursLogged,
+      completed: summary.completed.length,
+      pending: summary.pending.length,
+      summary: summary.summary,
+      productivityScore: productivity.score,
+      scoreLabel: productivity.scoreLabel,
+      strengths: productivity.strengths,
+      improvements: productivity.improvements,
+      tomorrowPlan: plan.schedule.map((item) => `${item.time} - ${item.item}`),
+    });
+    toast.success("PDF report downloaded");
+  };
 
-  const phone = auth?.mentorPhone?.trim();
+  const getReportText = () => {
+    if (!summary || !productivity || !plan) return "";
+    const studentName = auth?.name || "Student";
+    return `📅 Daily Work Report
+
+👤 Member: ${studentName}
+⏱ Hours Worked: ${context.hoursLogged}
+✅ Completed Tasks: ${summary.completed.length}
+⏳ Pending Tasks: ${summary.pending.length}
+📊 Productivity Score: ${productivity.score}% (${productivity.scoreLabel})
+
+📝 AI Summary:
+${summary.summary}
+
+💪 Strengths:
+${productivity.strengths.map((s) => `• ${s}`).join("\n")}
+
+💡 Improvements:
+${productivity.improvements.map((im) => `• ${im}`).join("\n")}
+
+📅 Tomorrow Plan:
+${plan.schedule.map((item) => `• ${item.time} - ${item.item}${item.why ? ` (${item.why})` : ""}`).join("\n")}`;
+  };
+
+  const copyReport = async () => {
+    const text = getReportText();
+    if (!text) {
+      toast.error("Generate AI Summary first.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Report copied to clipboard");
+    } catch {
+      toast.error("Could not copy report to clipboard");
+    }
+  };
+
+  const sendWhatsApp = () => {
+    if (!summary || !productivity || !plan) {
+      toast.error("Generate AI Summary first.");
+      return;
+    }
+
+    const phone = auth?.mentorPhone?.trim();
     if (!phone) {
       toast.error("Please save your mentor's WhatsApp number in Settings first.");
       return;
     }
 
-  const message = `📅 Daily Work Report
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    if (!cleanPhone) {
+      toast.error("Invalid WhatsApp number format. Enter digits with country code in Settings.");
+      return;
+    }
 
-👤 Student: Sadhvi
+    const studentName = auth?.name || "Student";
+    const message = `📅 Daily Work Report
+
+👤 Member: ${studentName}
 
 ⏱ Hours Worked: ${context.hoursLogged}
 
 ✅ Completed Tasks: ${summary.completed.length}
 ⏳ Pending Tasks: ${summary.pending.length}
 
-📊 Productivity Score: ${productivity.score}%
+📊 Productivity Score: ${productivity.score}% (${productivity.scoreLabel})
 
 📝 AI Summary:
 ${summary.summary}
 
 📅 Tomorrow Plan:
-${plan.schedule
-  .map((item) => `• ${item.time} - ${item.item}`)
-  .join("\n")}
+${plan.schedule.map((item) => `• ${item.time} - ${item.item}`).join("\n")}
 `;
 
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-
-  console.log(url);
-
-  window.location.href = url;
-}; 
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-4">
@@ -152,26 +197,44 @@ ${plan.schedule
               Summary, productivity analysis and tomorrow's plan from today's work.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={generate} disabled={loading} className="gap-2">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Generating…" : hasResult ? "Regenerate" : "Generate AI Summary"}
             </Button>
-            <Button variant="outline" onClick={exportReport} disabled={!hasResult}>
-              Export PDF
+            <Button variant="outline" onClick={copyReport} disabled={!hasResult} className="gap-2">
+              <Copy className="h-4 w-4" /> Copy
+            </Button>
+            <Button variant="outline" onClick={exportReport} disabled={!hasResult} className="gap-2">
+              <FileDown className="h-4 w-4" /> Export PDF
             </Button>
             <Button variant="default" onClick={sendWhatsApp} disabled={!hasResult} className="gap-2">
-                <MessageCircle className="h-4 w-4" />Send WhatsApp
+              <MessageCircle className="h-4 w-4" /> Send WhatsApp
             </Button>
           </div>
         </div>
       )}
 
       {compact && (
-        <Button onClick={generate} disabled={loading} className="gap-2">
-          <Sparkles className={`h-4 w-4 ${loading ? "animate-pulse" : ""}`} />
-          {loading ? "Generating…" : hasResult ? "Regenerate AI Summary" : "Generate AI Summary"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={generate} disabled={loading} className="gap-2">
+            <Sparkles className={`h-4 w-4 ${loading ? "animate-pulse" : ""}`} />
+            {loading ? "Generating…" : hasResult ? "Regenerate AI Summary" : "Generate AI Summary"}
+          </Button>
+          {hasResult && (
+            <>
+              <Button variant="outline" size="sm" onClick={copyReport} className="gap-1.5">
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportReport} className="gap-1.5">
+                <FileDown className="h-3.5 w-3.5" /> PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={sendWhatsApp} className="gap-1.5">
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+              </Button>
+            </>
+          )}
+        </div>
       )}
 
       {error && (
