@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,27 +24,125 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
-  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirm?: string }>({});
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [hasRecovery, setHasRecovery] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    // Supabase parses the recovery link and emits PASSWORD_RECOVERY / a session.
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    async function initRecovery() {
+      if (typeof window === "undefined") return;
+
+      // 1. Check for errors in query params or hash fragments
+      const searchParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.replace(/^#/, "");
+      const hashParams = new URLSearchParams(hash);
+
+      const urlError = searchParams.get("error") || hashParams.get("error");
+      const urlErrorDesc = searchParams.get("error_description") || hashParams.get("error_description");
+
+      if (urlError || urlErrorDesc) {
+        if (!active) return;
+        const msg = urlErrorDesc
+          ? decodeURIComponent(urlErrorDesc.replace(/\+/g, " "))
+          : "This reset link is invalid or has expired.";
+        setErrorMessage(msg);
+        setHasRecovery(false);
+        setReady(true);
+        return;
+      }
+
+      // 2. Handle PKCE code in query params (e.g. ?code=...)
+      const code = searchParams.get("code");
+      if (code) {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!active) return;
+          if (error) {
+            console.error("[Supabase Auth] PKCE exchange error:", error);
+            setErrorMessage(error.message || "Failed to verify reset code.");
+            setHasRecovery(false);
+            setReady(true);
+            return;
+          }
+          if (data.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
+        } catch (err) {
+          console.error("[Supabase Auth] PKCE exchange exception:", err);
+        }
+      }
+
+      // 3. Handle implicit token in hash fragment (e.g. #access_token=...&refresh_token=...&type=recovery)
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      if (accessToken && refreshToken) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!active) return;
+          if (error) {
+            console.error("[Supabase Auth] Hash setSession error:", error);
+            setErrorMessage(error.message || "Invalid or expired recovery token.");
+            setHasRecovery(false);
+            setReady(true);
+            return;
+          }
+          if (data.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
+        } catch (err) {
+          console.error("[Supabase Auth] Hash setSession exception:", err);
+        }
+      }
+
+      // 4. Check existing session from getSession()
+      const { data: sessionData } = await supabase.auth.getSession();
       if (!active) return;
-      setHasRecovery(Boolean(session));
-      setReady(true);
-    });
-    supabase.auth.getSession().then(({ data }) => {
+      if (sessionData.session) {
+        setHasRecovery(true);
+        setReady(true);
+        return;
+      }
+
+      // 5. Fallback timer if onAuthStateChange is still establishing
+      const timer = setTimeout(() => {
+        if (!active) return;
+        setReady((currentReady) => {
+          if (!currentReady) {
+            setHasRecovery(false);
+            return true;
+          }
+          return currentReady;
+        });
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+
+    // Subscribe to auth state changes for PASSWORD_RECOVERY and SIGNED_IN events
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      setHasRecovery(Boolean(data.session));
-      setReady(true);
+      if (event === "PASSWORD_RECOVERY" || (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION"))) {
+        setHasRecovery(true);
+        setReady(true);
+      }
     });
+
+    void initRecovery();
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -64,12 +162,19 @@ function ResetPasswordPage() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
+
     if (error) {
       toast.error("Couldn't update password", { description: authErrorMessage(error.message) });
       return;
     }
-    toast.success("Password updated", { description: "You're signed in with your new password." });
-    navigate({ to: "/dashboard", replace: true });
+
+    // Sign out the temporary recovery session so the user can sign in fresh
+    await supabase.auth.signOut();
+
+    setIsSuccess(true);
+    toast.success("Password updated successfully!", {
+      description: "You can now sign in with your new password.",
+    });
   };
 
   return (
@@ -82,19 +187,48 @@ function ResetPasswordPage() {
           AI Work Planner
         </Link>
 
-        {!ready ? (
-          <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground card-soft">
+        {isSuccess ? (
+          <div className="space-y-5 rounded-xl border bg-card p-6 card-soft">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-6 w-6" />
+            </span>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">Password updated successfully</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your password has been changed. You can now sign in with your new credentials.
+              </p>
+            </div>
+            <Button asChild className="w-full">
+              <Link to="/login">Go to sign in</Link>
+            </Button>
+          </div>
+        ) : !ready ? (
+          <div className="flex items-center justify-center gap-3 rounded-xl border bg-card p-8 text-sm text-muted-foreground card-soft">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
             Verifying your reset link…
           </div>
         ) : !hasRecovery ? (
           <div className="space-y-4 rounded-xl border bg-card p-6 card-soft">
-            <h1 className="text-xl font-semibold tracking-tight">This link is invalid or expired</h1>
-            <p className="text-sm text-muted-foreground">
-              Request a fresh password reset link and try again.
-            </p>
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-destructive/10 text-destructive">
+              <KeyRound className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">
+                {errorMessage ? "Reset link error" : "This link is invalid or expired"}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {errorMessage || "Password reset links can only be used once and expire after a short period. Please request a new link."}
+              </p>
+            </div>
             <Button asChild className="w-full">
               <Link to="/forgot-password">Request a new link</Link>
             </Button>
+            <Link
+              to="/login"
+              className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+            </Link>
           </div>
         ) : (
           <form onSubmit={submit} noValidate className="space-y-5 rounded-xl border bg-card p-6 card-soft">
@@ -111,6 +245,7 @@ function ResetPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 aria-invalid={Boolean(errors.password)}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -123,6 +258,7 @@ function ResetPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 aria-invalid={Boolean(errors.confirm)}
+                placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -132,6 +268,12 @@ function ResetPasswordPage() {
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? "Updating…" : "Update password"}
             </Button>
+            <Link
+              to="/login"
+              className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+            </Link>
           </form>
         )}
       </div>

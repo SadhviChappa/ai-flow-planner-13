@@ -36,8 +36,14 @@ function ForgotPasswordPage() {
     if (invalid) return;
 
     setLoading(true);
+    const origin =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : (import.meta.env.VITE_SITE_URL || "https://ai-flow-planner-13.vercel.app");
+    const redirectTo = `${origin.replace(/\/+$/, "")}/reset-password`;
+
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo,
     });
     setLoading(false);
     if (err) {
