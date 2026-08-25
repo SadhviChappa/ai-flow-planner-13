@@ -36,10 +36,10 @@ function ResetPasswordPage() {
   useEffect(() => {
     let active = true;
 
-    async function initRecovery() {
+    async function checkRecoveryAuth() {
       if (typeof window === "undefined") return;
 
-      // 1. Check for errors in query params or hash fragments
+      // 1. Check for explicit error in URL (query params or hash fragment)
       const searchParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash.replace(/^#/, "");
       const hashParams = new URLSearchParams(hash);
@@ -58,30 +58,47 @@ function ResetPasswordPage() {
         return;
       }
 
-      // 2. Handle PKCE code in query params (e.g. ?code=...)
+      // 2. Check if a valid session already exists (e.g. from Supabase background auto-detection)
+      const { data: initialSession } = await supabase.auth.getSession();
+      if (!active) return;
+      if (initialSession?.session) {
+        setHasRecovery(true);
+        setReady(true);
+        return;
+      }
+
+      // 3. Handle PKCE code in query params (if not auto-exchanged yet)
       const code = searchParams.get("code");
       if (code) {
         try {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (!active) return;
-          if (error) {
-            console.error("[Supabase Auth] PKCE exchange error:", error);
-            setErrorMessage(error.message || "Failed to verify reset code.");
-            setHasRecovery(false);
-            setReady(true);
-            return;
-          }
-          if (data.session) {
+          if (data?.session) {
             setHasRecovery(true);
             setReady(true);
             return;
           }
-        } catch (err) {
-          console.error("[Supabase Auth] PKCE exchange exception:", err);
+          // Re-verify session in case Supabase background listener auto-exchanged it concurrently
+          const { data: checkSession } = await supabase.auth.getSession();
+          if (checkSession?.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
+          if (error) {
+            setErrorMessage(error.message || "Failed to verify reset code.");
+          }
+        } catch {
+          const { data: checkSession } = await supabase.auth.getSession();
+          if (checkSession?.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
         }
       }
 
-      // 3. Handle implicit token in hash fragment (e.g. #access_token=...&refresh_token=...&type=recovery)
+      // 4. Handle implicit tokens in hash fragment (if not auto-parsed yet)
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
       if (accessToken && refreshToken) {
@@ -91,57 +108,58 @@ function ResetPasswordPage() {
             refresh_token: refreshToken,
           });
           if (!active) return;
-          if (error) {
-            console.error("[Supabase Auth] Hash setSession error:", error);
-            setErrorMessage(error.message || "Invalid or expired recovery token.");
-            setHasRecovery(false);
-            setReady(true);
-            return;
-          }
-          if (data.session) {
+          if (data?.session) {
             setHasRecovery(true);
             setReady(true);
             return;
           }
-        } catch (err) {
-          console.error("[Supabase Auth] Hash setSession exception:", err);
+          const { data: checkSession } = await supabase.auth.getSession();
+          if (checkSession?.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
+          if (error) {
+            setErrorMessage(error.message || "Invalid or expired recovery token.");
+          }
+        } catch {
+          const { data: checkSession } = await supabase.auth.getSession();
+          if (checkSession?.session) {
+            setHasRecovery(true);
+            setReady(true);
+            return;
+          }
         }
       }
 
-      // 4. Check existing session from getSession()
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!active) return;
-      if (sessionData.session) {
-        setHasRecovery(true);
-        setReady(true);
-        return;
-      }
-
-      // 5. Fallback timer if onAuthStateChange is still establishing
-      const timer = setTimeout(() => {
+      // 5. Final fallback check after 1000ms
+      const timer = setTimeout(async () => {
         if (!active) return;
-        setReady((currentReady) => {
-          if (!currentReady) {
-            setHasRecovery(false);
-            return true;
-          }
-          return currentReady;
-        });
-      }, 1500);
+        const { data: finalSession } = await supabase.auth.getSession();
+        if (finalSession?.session) {
+          setHasRecovery(true);
+        } else {
+          setHasRecovery(false);
+        }
+        setReady(true);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
 
-    // Subscribe to auth state changes for PASSWORD_RECOVERY and SIGNED_IN events
+    // Subscribe to auth state changes for PASSWORD_RECOVERY, SIGNED_IN, INITIAL_SESSION
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      if (event === "PASSWORD_RECOVERY" || (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION"))) {
+      if (
+        event === "PASSWORD_RECOVERY" ||
+        (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED"))
+      ) {
         setHasRecovery(true);
         setReady(true);
       }
     });
 
-    void initRecovery();
+    void checkRecoveryAuth();
 
     return () => {
       active = false;
