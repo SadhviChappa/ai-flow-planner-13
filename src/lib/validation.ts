@@ -30,8 +30,16 @@ export function authErrorMessage(message: string): string {
   if (m.includes("email not confirmed")) return "Confirm your email address first, then sign in.";
   if (m.includes("already registered") || m.includes("already been registered"))
     return "An account with this email already exists. Try signing in.";
-  if (m.includes("rate limit") || m.includes("too many"))
-    return "Too many attempts. Please wait a moment and try again.";
+  
+  // Handle Supabase security cooldown / rate limit
+  if (m.includes("security purposes") || m.includes("rate limit") || m.includes("too many") || m.includes("over_email_send_rate_limit")) {
+    const secondsMatch = message.match(/(\d+)\s*seconds?/i);
+    if (secondsMatch) {
+      return `For security, please wait ${secondsMatch[1]} seconds before requesting another email.`;
+    }
+    return "Email rate limit reached. Please wait a minute before trying again.";
+  }
+  
   if (m.includes("password")) return message;
   if (m.includes("failed to fetch")) return "Network problem — check your connection and retry.";
   return message;
