@@ -46,11 +46,19 @@ function ForgotPasswordPage() {
     if (invalid) return;
 
     setLoading(true);
-    const origin =
+    let rawOrigin =
       typeof window !== "undefined"
         ? window.location.origin
         : (import.meta.env.VITE_SITE_URL || "https://ai-flow-planner-13.vercel.app");
-    const redirectTo = `${origin.replace(/\/+$/, "")}/reset-password`;
+
+    // Clean duplicate protocols, malformed prefixes, or duplicate domain suffixes
+    rawOrigin = rawOrigin
+      .replace(/^(https?:\/\/)+/i, "https://")
+      .replace(/(\.vercel\.app)+/i, ".vercel.app")
+      .replace(/\/+$/, "");
+
+    const redirectTo = `${rawOrigin}/reset-password`;
+    console.log("[Supabase Auth] Requesting reset link with redirectTo:", redirectTo);
 
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo,
